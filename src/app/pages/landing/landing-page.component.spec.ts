@@ -15,8 +15,12 @@ describe('LandingPageComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders primary CTA', () => {
+  it('renders main sections and CTA', () => {
     const compiled: HTMLElement = fixture.nativeElement;
-    expect(compiled.textContent).toContain('Criar conta');
+    expect(compiled.querySelector('.hero-actions ui-button')).toBeTruthy();
+    expect(compiled.querySelector('#features')).toBeTruthy();
+    expect(compiled.querySelector('#how')).toBeTruthy();
+    expect(compiled.querySelector('#family')).toBeTruthy();
   });
 });
+

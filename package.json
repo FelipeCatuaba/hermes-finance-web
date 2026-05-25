@@ -1,6 +1,6 @@
 {
   "name": "hermes-finance-web",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "ng": "ng",
@@ -20,6 +20,7 @@
     "@angular/platform-browser-dynamic": "^17.3.0",
     "@angular/router": "^17.3.0",
     "@clerk/clerk-js": "^6.12.1",
+    "bootstrap-icons": "^1.11.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.3"

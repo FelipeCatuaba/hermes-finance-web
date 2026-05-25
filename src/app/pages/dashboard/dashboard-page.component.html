@@ -1,10 +1,10 @@
-<section class="dashboard-stack">
+﻿<section class="dashboard-stack">
   <header class="page-header">
     <div>
       <h1>Dashboard</h1>
-      <p>Vis�o consolidada mensal com fallback BFF-ready.</p>
+      <p>Visão mensal consolidada de receitas, gastos e família.</p>
     </div>
-    <div class="health-pill">API: {{ (health$ | async)?.status ?? 'offline' }}</div>
+    <div class="health-pill">API {{ (health$ | async)?.status ?? 'offline' }}</div>
   </header>
 
   @if (snapshot$ | async; as snapshot) {
@@ -13,9 +13,9 @@
     </div>
 
     <div class="content-grid">
-      <ui-card>
-        <h2>Categorias de despesa</h2>
-        <ul>
+      <ui-card class="panel chart-panel">
+        <h2>Gastos por categoria</h2>
+        <ul class="metric-list">
           <li *ngFor="let item of snapshot.expenseByCategory">
             <span>{{ item.name }}</span>
             <strong>{{ item.amount }}</strong>
@@ -23,12 +23,28 @@
         </ul>
       </ui-card>
 
-      <ui-card>
-        <h2>Painel fam�lia</h2>
-        <ul>
-          <li *ngFor="let highlight of snapshot.familyHighlights">{{ highlight }}</li>
-        </ul>
-      </ui-card>
+      <div class="right-stack">
+        <ui-card class="panel">
+          <h2>Resumo da família</h2>
+          <ul class="metric-list compact">
+            <li *ngFor="let highlight of snapshot.familyHighlights">
+              <span>{{ highlight }}</span>
+            </li>
+          </ul>
+        </ui-card>
+
+        <ui-card class="panel savings-panel">
+          <h2>Poupança mensal</h2>
+          <div class="ring-row">
+            <div class="ring">22%</div>
+            <div>
+              <p class="ring-label">Meta atual</p>
+              <strong>R$ 1.820,00</strong>
+            </div>
+          </div>
+        </ui-card>
+      </div>
     </div>
   }
 </section>
+

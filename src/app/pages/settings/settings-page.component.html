@@ -1,34 +1,35 @@
-<section class="settings-stack">
+Ôªø<section class="settings-stack">
   <header>
-    <h1>ConfiguraÁıes</h1>
-    <p>Dados carregados por facade para troca transparente quando os endpoints reais forem publicados.</p>
+    <h1>Configura√ß√µes</h1>
+    <p>Gerencie membros, categorias, or√ßamento e seguran√ßa da conta.</p>
   </header>
 
   @if (snapshot$ | async; as snapshot) {
     <div class="settings-grid">
-      <ui-card>
-        <h2>Membros da famÌlia</h2>
-        <ul>
+      <ui-card class="panel">
+        <h2>Membros da fam√≠lia</h2>
+        <ul class="plain-list">
           <li *ngFor="let member of snapshot.familyMembers">{{ member }}</li>
         </ul>
       </ui-card>
 
-      <ui-card>
+      <ui-card class="panel">
         <h2>Categorias</h2>
-        <ul>
+        <ul class="plain-list">
           <li *ngFor="let category of snapshot.categories">{{ category }}</li>
         </ul>
       </ui-card>
 
-      <ui-card>
-        <h2>OrÁamento mensal</h2>
+      <ui-card class="panel budget-panel">
+        <h2>Or√ßamento mensal</h2>
         <p class="value">{{ snapshot.monthlyBudget }}</p>
       </ui-card>
 
-      <ui-card>
-        <h2>SeguranÁa</h2>
-        <p>{{ snapshot.securityLabel }}</p>
+      <ui-card class="panel">
+        <h2>Seguran√ßa</h2>
+        <p class="security-copy">{{ snapshot.securityLabel }}</p>
       </ui-card>
     </div>
   }
 </section>
+

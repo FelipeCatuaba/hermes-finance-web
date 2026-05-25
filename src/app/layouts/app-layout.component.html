@@ -1,19 +1,34 @@
 ﻿<div class="layout-shell">
-  <header class="layout-header">
-    <a routerLink="/dashboard" class="brand">HERMES</a>
+  <aside class="sidebar" [ngClass]="{ open: mobileMenuOpen() }">
+    <a routerLink="/dashboard" class="brand" (click)="closeMobileMenu()">HERMES</a>
+    <p class="brand-tag">gestão financeira</p>
 
-    <nav class="nav-links">
-      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-      <a routerLink="/settings" routerLinkActive="active">Configuracoes</a>
+    <div class="month-wrap">
+      <ui-month-selector [selectedMonth]="month()" [year]="year()" (monthChange)="onMonthChange($event)" />
+    </div>
+
+    <nav class="menu">
+      <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">Dashboard</a>
+      <a routerLink="/settings" routerLinkActive="active" (click)="closeMobileMenu()">Configurações</a>
     </nav>
 
-    <div class="header-actions">
-      <ui-month-selector [selectedMonth]="month()" [year]="year()" (monthChange)="onMonthChange($event)" />
+    <div class="sidebar-footer">
       <ui-button variant="secondary" (click)="logout()">Sair</ui-button>
     </div>
-  </header>
+  </aside>
 
-  <main class="layout-content">
-    <router-outlet />
-  </main>
+  <div class="layout-main">
+    <header class="topbar">
+      <button type="button" class="menu-trigger" (click)="toggleMobileMenu()">?</button>
+      <div>
+        <p class="top-label">Painel Financeiro</p>
+        <strong>Abrangência mensal</strong>
+      </div>
+    </header>
+
+    <main class="layout-content">
+      <router-outlet />
+    </main>
+  </div>
 </div>
+

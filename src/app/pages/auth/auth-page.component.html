@@ -1,23 +1,91 @@
-<section class="auth-page">
-  <div class="auth-shell">
-    <aside>
-      <a routerLink="/" class="brand">HERMES</a>
-      <h1>{{ mode() === 'sign-up' ? 'Crie sua conta' : 'Acesse sua conta' }}</h1>
-      <p>
-        Autentica��o segura com Clerk e token JWT para consumir API protegida do backend Spring.
-      </p>
-      <ui-button variant="secondary" routerLink="/">Voltar para landing</ui-button>
-    </aside>
+﻿<section class="auth-page">
+  <div class="section-container auth-content">
+    <p class="section-kicker">Acesso</p>
+    <h1 class="section-title">{{ isSignUp() ? 'Criar conta' : 'Entrar' }}</h1>
 
-    <div class="auth-widget-wrap">
-      @if (hasClerkKey()) {
-        <div #authContainer class="auth-widget"></div>
-      } @else {
-        <article class="empty-state">
-          <h2>Configure o Clerk para continuar</h2>
-          <p>Defina <code>CLERK_PUBLISHABLE_KEY</code> em <code>window.__HERMES_ENV__</code> para habilitar login.</p>
-        </article>
-      }
+    <div class="auth-grid">
+      <article class="auth-card featured">
+        <h2>{{ isSignUp() ? 'Novo por aqui?' : 'Bem-vindo de volta' }}</h2>
+        <p>
+          {{ isSignUp()
+            ? 'Crie sua conta para começar a organizar suas finanças com clareza.'
+            : 'Acesse seu painel financeiro e continue de onde parou.' }}
+        </p>
+
+        @if (!isSignUp()) {
+          <form [formGroup]="signInForm" (ngSubmit)="submitSignIn()" class="auth-form">
+            <label>Email
+              <input type="email" formControlName="email" placeholder="seu@email.com" />
+            </label>
+            <label>Senha
+              <input type="password" formControlName="password" placeholder="mínimo 8 caracteres" />
+            </label>
+            <label class="check-row">
+              <input type="checkbox" formControlName="remember" />
+              <span>Lembrar de mim</span>
+            </label>
+            <ui-button type="submit">Entrar</ui-button>
+          </form>
+        } @else {
+          <form [formGroup]="signUpForm" (ngSubmit)="submitSignUp()" class="auth-form">
+            <label>Nome
+              <input type="text" formControlName="name" placeholder="Seu nome" />
+            </label>
+            <label>Email
+              <input type="email" formControlName="email" placeholder="seu@email.com" />
+            </label>
+            <label>Senha
+              <input type="password" formControlName="password" placeholder="mínimo 8 caracteres" />
+            </label>
+            <label>Confirmar senha
+              <input type="password" formControlName="confirmPassword" placeholder="repita sua senha" />
+            </label>
+            <label class="check-row">
+              <input type="checkbox" formControlName="acceptTerms" />
+              <span>Concordo com os termos de uso</span>
+            </label>
+            <ui-button type="submit">Criar conta</ui-button>
+          </form>
+        }
+
+        <div class="divider"><span>OR</span></div>
+
+        <div class="sso-stack">
+          <button type="button" class="sso-btn" (click)="signInWithSso('google')">
+            <i class="bi bi-google"></i>
+            Continuar com Google
+          </button>
+          <button type="button" class="sso-btn" (click)="signInWithSso('apple')">
+            <i class="bi bi-apple"></i>
+            Continuar com Apple
+          </button>
+        </div>
+
+        @if (statusMessage()) {
+          <p class="status-message">{{ statusMessage() }}</p>
+        }
+      </article>
+
+      <article class="auth-card">
+        <h2>{{ isSignUp() ? 'Já possui conta?' : 'Ainda não tem conta?' }}</h2>
+        <p>
+          {{ isSignUp()
+            ? 'Se você já possui cadastro, entre com seus dados.'
+            : 'Crie sua conta gratuita em poucos segundos.' }}
+        </p>
+
+        <ui-button
+          variant="secondary"
+          routerLink="/auth"
+          [queryParams]="{ mode: isSignUp() ? 'sign-in' : 'sign-up' }"
+        >
+          {{ isSignUp() ? 'Ir para login' : 'Criar minha conta' }}
+        </ui-button>
+
+        <div class="support-links">
+          <a routerLink="/">Voltar para landing</a>
+        </div>
+      </article>
     </div>
   </div>
 </section>

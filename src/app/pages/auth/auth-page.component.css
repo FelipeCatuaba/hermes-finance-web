@@ -1,57 +1,141 @@
-.auth-page {
+﻿.auth-page {
   min-height: 100vh;
-  background: linear-gradient(140deg, var(--color-canvas), var(--color-surface-soft));
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  padding: 7rem 0 3rem;
+  background: radial-gradient(circle at top right, rgba(52, 97, 245, 0.2), transparent 46%), var(--color-canvas);
 }
 
-.auth-shell {
-  width: min(1080px, 100%);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  align-items: stretch;
+.auth-content {
+  position: relative;
+  z-index: 1;
 }
 
-aside,
-.auth-widget-wrap {
+.section-kicker {
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8ba5ff;
+  font-size: 0.66rem;
+  margin: 0;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  margin: 0.8rem 0 1.4rem;
+}
+
+.auth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.auth-card {
   border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-xl);
-  background: #fff;
-  padding: 28px;
+  border-radius: 20px;
+  padding: 1.4rem;
+  background: var(--color-surface-soft);
 }
 
-.brand {
-  font-family: var(--font-display);
-  color: var(--color-primary);
-  text-decoration: none;
-  font-size: 30px;
+.auth-card.featured {
+  border-color: rgba(56, 217, 245, 0.45);
+  box-shadow: var(--shadow-soft);
 }
 
-h1 {
-  font-family: var(--font-display);
-  font-size: 2.2rem;
-  margin: 16px 0;
+.auth-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
 }
 
-p {
+.auth-card p {
   color: var(--color-body);
+  margin: 0.5rem 0 1rem;
   line-height: 1.6;
 }
 
-.auth-widget {
-  min-height: 520px;
+.auth-form {
+  display: grid;
+  gap: 0.7rem;
 }
 
-.empty-state {
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-soft);
-  padding: 20px;
+.auth-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--color-body);
+}
+
+.auth-form input[type='email'],
+.auth-form input[type='password'],
+.auth-form input[type='text'] {
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 12px;
+  background: var(--color-surface-dark);
+  color: var(--color-ink);
+  padding: 0.7rem 0.85rem;
+}
+
+.check-row {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1rem 0 0.8rem;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-hairline-soft);
+}
+
+.sso-stack {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.sso-btn {
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 999px;
+  background: var(--color-surface-dark);
+  color: var(--color-ink);
+  padding: 0.65rem 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-message {
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  color: #8ba5ff;
+}
+
+.support-links {
+  margin-top: 1rem;
+}
+
+.support-links a {
+  color: #8ba5ff;
+  text-decoration: none;
+  font-size: 0.88rem;
 }
 
 @media (max-width: 960px) {
-  .auth-shell {
+  .auth-grid {
     grid-template-columns: 1fr;
   }
 }
