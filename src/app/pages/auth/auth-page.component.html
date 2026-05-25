@@ -1,0 +1,23 @@
+<section class="auth-page">
+  <div class="auth-shell">
+    <aside>
+      <a routerLink="/" class="brand">HERMES</a>
+      <h1>{{ mode() === 'sign-up' ? 'Crie sua conta' : 'Acesse sua conta' }}</h1>
+      <p>
+        Autenticação segura com Clerk e token JWT para consumir API protegida do backend Spring.
+      </p>
+      <ui-button variant="secondary" routerLink="/">Voltar para landing</ui-button>
+    </aside>
+
+    <div class="auth-widget-wrap">
+      @if (hasClerkKey()) {
+        <div #authContainer class="auth-widget"></div>
+      } @else {
+        <article class="empty-state">
+          <h2>Configure o Clerk para continuar</h2>
+          <p>Defina <code>CLERK_PUBLISHABLE_KEY</code> em <code>window.__HERMES_ENV__</code> para habilitar login.</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>

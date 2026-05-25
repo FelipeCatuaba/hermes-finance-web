@@ -1,0 +1,34 @@
+<section class="dashboard-stack">
+  <header class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Visão consolidada mensal com fallback BFF-ready.</p>
+    </div>
+    <div class="health-pill">API: {{ (health$ | async)?.status ?? 'offline' }}</div>
+  </header>
+
+  @if (snapshot$ | async; as snapshot) {
+    <div class="kpi-grid">
+      <ui-kpi-card *ngFor="let kpi of snapshot.kpis" [kpi]="kpi" />
+    </div>
+
+    <div class="content-grid">
+      <ui-card>
+        <h2>Categorias de despesa</h2>
+        <ul>
+          <li *ngFor="let item of snapshot.expenseByCategory">
+            <span>{{ item.name }}</span>
+            <strong>{{ item.amount }}</strong>
+          </li>
+        </ul>
+      </ui-card>
+
+      <ui-card>
+        <h2>Painel família</h2>
+        <ul>
+          <li *ngFor="let highlight of snapshot.familyHighlights">{{ highlight }}</li>
+        </ul>
+      </ui-card>
+    </div>
+  }
+</section>

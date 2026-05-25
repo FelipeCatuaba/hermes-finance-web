@@ -1,0 +1,64 @@
+<ui-section-shell>
+  <div class="hero-grid">
+    <div class="hero-copy">
+      <ui-badge class="fade-in">Institutional personal finance</ui-badge>
+      <h1 class="hero-title fade-in fade-delay-1">Domine sua vida financeira com clareza editorial.</h1>
+      <p class="hero-sub fade-in fade-delay-2">
+        O HERMES combina controle mensal, colaboração familiar e segurança de autenticação moderna para organizar seu dinheiro com confiança.
+      </p>
+      <div class="hero-actions fade-in fade-delay-3">
+        <ui-button routerLink="/auth" [queryParams]="{ mode: 'sign-up' }">Criar conta</ui-button>
+        <ui-button variant="secondary" routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Entrar</ui-button>
+      </div>
+    </div>
+
+    <ui-card variant="dark" class="hero-panel fade-in fade-delay-2">
+      <p class="panel-kicker">Preview do painel</p>
+      <h3>Saldo consolidado</h3>
+      <strong>R$ 3.560,00</strong>
+      <ul>
+        <li>Receitas: R$ 8.200,00</li>
+        <li>Despesas: R$ 4.640,00</li>
+        <li>Meta de economia: 22%</li>
+      </ul>
+    </ui-card>
+  </div>
+</ui-section-shell>
+
+<ui-section-shell [dark]="true">
+  <div class="section-container">
+    <h2 class="section-title">Funcionalidades essenciais</h2>
+    <div class="feature-grid">
+      <ui-card *ngFor="let card of featureCards" class="feature-card">
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.body }}</p>
+      </ui-card>
+    </div>
+  </div>
+</ui-section-shell>
+
+<ui-section-shell>
+  <div class="section-container timeline-grid">
+    <div>
+      <h2 class="section-title">Como funciona</h2>
+      <p class="section-body">Fluxo simples para manter disciplina financeira sem fricção.</p>
+    </div>
+    <ol>
+      <li *ngFor="let item of timeline">{{ item }}</li>
+    </ol>
+  </div>
+</ui-section-shell>
+
+<ui-section-shell>
+  <div class="cta-band">
+    <h2>Pronto para organizar as finanças da sua família?</h2>
+    <ui-button routerLink="/auth" [queryParams]="{ mode: 'sign-up' }">Começar agora</ui-button>
+  </div>
+</ui-section-shell>
+
+<footer class="landing-footer">
+  <div class="section-container footer-inner">
+    <span>© 2026 HERMES Finance</span>
+    <a routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Entrar</a>
+  </div>
+</footer>

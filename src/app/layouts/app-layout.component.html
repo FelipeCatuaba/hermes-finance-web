@@ -1,0 +1,19 @@
+﻿<div class="layout-shell">
+  <header class="layout-header">
+    <a routerLink="/dashboard" class="brand">HERMES</a>
+
+    <nav class="nav-links">
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/settings" routerLinkActive="active">Configuracoes</a>
+    </nav>
+
+    <div class="header-actions">
+      <ui-month-selector [selectedMonth]="month()" [year]="year()" (monthChange)="onMonthChange($event)" />
+      <ui-button variant="secondary" (click)="logout()">Sair</ui-button>
+    </div>
+  </header>
+
+  <main class="layout-content">
+    <router-outlet />
+  </main>
+</div>

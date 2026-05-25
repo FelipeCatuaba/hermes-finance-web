@@ -1,0 +1,79 @@
+.layout-shell {
+  min-height: 100vh;
+  background: var(--color-surface-soft);
+}
+
+.layout-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid var(--color-hairline);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 12px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--color-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.nav-links a.active {
+  background: var(--color-surface-strong);
+  color: var(--color-ink);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-picker {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+select {
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.layout-content {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 24px 0 40px;
+}
+
+@media (max-width: 768px) {
+  .layout-header {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+}
