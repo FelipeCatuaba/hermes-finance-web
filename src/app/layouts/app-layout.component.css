@@ -19,9 +19,18 @@
 
 .brand {
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-family: var(--font-display);
   font-style: italic;
   font-size: 1.5rem;
+}
+
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 
 .brand-tag {
