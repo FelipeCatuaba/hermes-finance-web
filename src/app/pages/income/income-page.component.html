@@ -1,0 +1,31 @@
+﻿<section class="page-stack">
+  <header class="page-header">
+    <div>
+      <h1>Receitas</h1>
+      <p>Entradas do mês com visão consolidada e histórico recente.</p>
+    </div>
+    <div class="total-pill">Total: R$ 8.770,00</div>
+  </header>
+
+  <div class="grid">
+    <ui-card class="panel">
+      <h2>Entradas do mês</h2>
+      <ul>
+        <li *ngFor="let item of entries">
+          <div>
+            <strong>{{ item.name }}</strong>
+            <p>{{ item.date }} · {{ item.tag }}</p>
+          </div>
+          <span>{{ item.amount }}</span>
+        </li>
+      </ul>
+    </ui-card>
+
+    <ui-card class="panel">
+      <h2>Resumo</h2>
+      <div class="summary-row"><span>Receita principal</span><strong>R$ 8.000,00</strong></div>
+      <div class="summary-row"><span>Entradas extras</span><strong>R$ 770,00</strong></div>
+      <div class="summary-row"><span>Média diária</span><strong>R$ 292,33</strong></div>
+    </ui-card>
+  </div>
+</section>
