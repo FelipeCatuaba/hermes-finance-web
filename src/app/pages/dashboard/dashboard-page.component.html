@@ -1,0 +1,50 @@
+﻿<section class="dashboard-stack">
+  <header class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Visão mensal consolidada de receitas, gastos e família.</p>
+    </div>
+    <div class="health-pill">API {{ (health$ | async)?.status ?? 'offline' }}</div>
+  </header>
+
+  @if (snapshot$ | async; as snapshot) {
+    <div class="kpi-grid">
+      <ui-kpi-card *ngFor="let kpi of snapshot.kpis" [kpi]="kpi" />
+    </div>
+
+    <div class="content-grid">
+      <ui-card class="panel chart-panel">
+        <h2>Gastos por categoria</h2>
+        <ul class="metric-list">
+          <li *ngFor="let item of snapshot.expenseByCategory">
+            <span>{{ item.name }}</span>
+            <strong>{{ item.amount }}</strong>
+          </li>
+        </ul>
+      </ui-card>
+
+      <div class="right-stack">
+        <ui-card class="panel">
+          <h2>Resumo da família</h2>
+          <ul class="metric-list compact">
+            <li *ngFor="let highlight of snapshot.familyHighlights">
+              <span>{{ highlight }}</span>
+            </li>
+          </ul>
+        </ui-card>
+
+        <ui-card class="panel savings-panel">
+          <h2>Poupança mensal</h2>
+          <div class="ring-row">
+            <div class="ring">22%</div>
+            <div>
+              <p class="ring-label">Meta atual</p>
+              <strong>R$ 1.820,00</strong>
+            </div>
+          </div>
+        </ui-card>
+      </div>
+    </div>
+  }
+</section>
+

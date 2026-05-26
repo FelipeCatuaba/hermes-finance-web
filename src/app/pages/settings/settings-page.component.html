@@ -1,0 +1,75 @@
+﻿<section class="settings-stack">
+  <header>
+    <h1>Configurações</h1>
+    <p>Gerencie membros, categorias, orçamento e segurança da conta.</p>
+  </header>
+
+  @if (snapshot$ | async; as snapshot) {
+    <div class="settings-grid">
+      <ui-card class="panel">
+        <div class="card-head">
+          <h2>Membros da família</h2>
+          <button type="button" class="ghost-btn" (click)="openCreateForm()">+ Adicionar</button>
+        </div>
+
+        @if (familyLoading) {
+          <p class="helper-copy">Carregando membros...</p>
+        }
+
+        @if (!familyLoading) {
+          <ul class="plain-list">
+            <li *ngFor="let member of familyMembers" [class.inactive]="!member.active">
+              <div class="member-main">
+                <span class="member-dot" [style.background]="getMemberColor(member)"></span>
+                <div>
+                  <strong>{{ member.name }}</strong>
+                  <p>{{ member.relation || 'Sem relação definida' }}</p>
+                </div>
+              </div>
+              <div class="member-actions">
+                <button type="button" class="link-btn" (click)="openEditForm(member)">Editar</button>
+                <button type="button" class="link-btn danger" (click)="deactivateMember(member)" [disabled]="!member.active">Desativar</button>
+              </div>
+            </li>
+          </ul>
+        }
+
+        @if (showForm) {
+          <div class="member-form">
+            <label>Nome
+              <input type="text" [(ngModel)]="memberForm.name" maxlength="100" />
+            </label>
+            <label>Relação
+              <input type="text" [(ngModel)]="memberForm.relation" maxlength="100" />
+            </label>
+            <div class="form-actions">
+              <button type="button" class="ghost-btn" (click)="cancelForm()">Cancelar</button>
+              <button type="button" class="solid-btn" (click)="saveMember()">Salvar</button>
+            </div>
+          </div>
+        }
+
+        @if (familyError) {
+          <p class="error-copy">{{ familyError }}</p>
+        }
+      </ui-card>
+
+      <ui-card class="panel">
+        <h2>Categorias</h2>
+        <ul class="plain-list">
+          <li *ngFor="let category of snapshot.categories">{{ category }}</li>
+        </ul>
+      </ui-card>
+
+      <ui-card class="panel budget-panel">
+        <h2>Orçamento mensal</h2>
+        <p class="value">{{ snapshot.monthlyBudget }}</p>
+      </ui-card>
+
+      <ui-card class="panel">
+        <h2>Segurança</h2>
+        <p class="security-copy">{{ snapshot.securityLabel }}</p>
+      </ui-card>
+    </div>
+  }
+</section>

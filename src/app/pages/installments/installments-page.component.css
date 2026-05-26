@@ -1,0 +1,11 @@
+﻿.page-stack { display: grid; gap: 1rem; }
+.page-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.page-header h1 { margin: 0; font-family: var(--font-display); font-size: clamp(1.9rem, 5vw, 2.5rem); }
+.page-header p { margin: 0.4rem 0 0; color: var(--color-body); }
+.total-pill { border: 1px solid var(--color-hairline-soft); border-radius: 999px; padding: 0.55rem 0.9rem; font-family: var(--font-mono); }
+.panel h2 { margin: 0 0 0.8rem; font-size: 1rem; }
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+li { display: flex; justify-content: space-between; gap: 0.8rem; border-bottom: 1px solid var(--color-hairline-soft); padding-bottom: 0.55rem; }
+li p { margin: 0.2rem 0 0; font-size: 0.75rem; color: var(--color-muted); }
+li span { color: #c0cfff; font-family: var(--font-mono); }
+@media (max-width: 960px) { .page-header { flex-direction: column; } }

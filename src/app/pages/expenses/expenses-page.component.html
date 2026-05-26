@@ -1,0 +1,32 @@
+﻿<section class="page-stack">
+  <header class="page-header">
+    <div>
+      <h1>Gastos</h1>
+      <p>Controle por categoria com foco em redução e previsibilidade.</p>
+    </div>
+    <div class="total-pill">Total: R$ 2.497,10</div>
+  </header>
+
+  <div class="grid">
+    <ui-card class="panel">
+      <h2>Lançamentos recentes</h2>
+      <ul>
+        <li *ngFor="let item of items">
+          <div>
+            <strong>{{ item.name }}</strong>
+            <p>{{ item.category }}</p>
+          </div>
+          <span>{{ item.amount }}</span>
+        </li>
+      </ul>
+    </ui-card>
+
+    <ui-card class="panel">
+      <h2>Distribuição por categoria</h2>
+      <div class="bar-row"><span>Moradia</span><div class="bar"><i style="width: 60%"></i></div></div>
+      <div class="bar-row"><span>Alimentação</span><div class="bar"><i style="width: 40%"></i></div></div>
+      <div class="bar-row"><span>Transporte</span><div class="bar"><i style="width: 26%"></i></div></div>
+      <div class="bar-row"><span>Saúde</span><div class="bar"><i style="width: 15%"></i></div></div>
+    </ui-card>
+  </div>
+</section>

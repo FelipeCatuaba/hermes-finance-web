@@ -1,0 +1,123 @@
+﻿.dashboard-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+}
+
+.page-header p {
+  margin: 0.4rem 0 0;
+  color: var(--color-body);
+}
+
+.health-pill {
+  border-radius: var(--radius-pill);
+  padding: 0.55rem 0.85rem;
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-hairline-soft);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.kpi-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: 0.8rem;
+}
+
+.right-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.8rem;
+  font-size: 1rem;
+}
+
+.metric-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.56rem;
+}
+
+.metric-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-hairline-soft);
+  padding-bottom: 0.45rem;
+  color: var(--color-body);
+}
+
+.metric-list li strong {
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+}
+
+.metric-list.compact li {
+  justify-content: flex-start;
+}
+
+.ring-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.ring {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 6px solid rgba(56, 217, 245, 0.35);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.ring-label {
+  margin: 0 0 0.24rem;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 1120px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+}
+

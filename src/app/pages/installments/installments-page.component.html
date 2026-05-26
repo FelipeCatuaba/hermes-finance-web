@@ -1,0 +1,22 @@
+﻿<section class="page-stack">
+  <header class="page-header">
+    <div>
+      <h1>Parcelamentos</h1>
+      <p>Visão das compras parceladas e impacto nos próximos meses.</p>
+    </div>
+    <div class="total-pill">Compromisso: R$ 1.010,00/mês</div>
+  </header>
+
+  <ui-card class="panel">
+    <h2>Contratos ativos</h2>
+    <ul>
+      <li *ngFor="let item of contracts">
+        <div>
+          <strong>{{ item.title }}</strong>
+          <p>Parcela {{ item.progress }}</p>
+        </div>
+        <span>{{ item.next }}</span>
+      </li>
+    </ul>
+  </ui-card>
+</section>

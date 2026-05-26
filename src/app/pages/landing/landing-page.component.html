@@ -1,0 +1,137 @@
+﻿<div class="landing-page">
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <nav class="top-nav" [ngClass]="{ scrolled: navScrolled() }">
+    <a class="nav-logo" routerLink="/">HERMES</a>
+    <div class="nav-links">
+      <a href="#features">Funcionalidades</a>
+      <a href="#how">Como funciona</a>
+      <a href="#family">Família</a>
+    </div>
+    <div class="nav-actions">
+      <ui-button variant="secondary" routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Entrar</ui-button>
+      <ui-button routerLink="/auth" [queryParams]="{ mode: 'sign-up' }">Criar conta</ui-button>
+    </div>
+  </nav>
+
+  <section class="hero section-container">
+    <div class="hero-badge fade-in">Gestão financeira pessoal com clareza</div>
+    <h1 class="hero-title fade-in fade-delay-1">
+      Suas finanças, <span>do jeito que fazem sentido</span>
+    </h1>
+    <p class="hero-sub fade-in fade-delay-2">
+      Controle receitas, gastos e família em um único fluxo, com visão real de saldo e economia mensal.
+    </p>
+    <div class="hero-actions fade-in fade-delay-3">
+      <ui-button routerLink="/auth" [queryParams]="{ mode: 'sign-up' }">Começar agora</ui-button>
+      <ui-button variant="secondary" routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Já tenho conta</ui-button>
+    </div>
+
+    <article class="preview-frame fade-in fade-delay-4">
+      <header class="preview-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="url">hermes.app/dashboard</div>
+      </header>
+      <div class="preview-body">
+        <aside class="preview-side">
+          <div class="side-logo">HERMES</div>
+          <div class="side-month">Abril 2026</div>
+          <div class="side-link active">Dashboard</div>
+          <div class="side-link">Receitas</div>
+          <div class="side-link">Gastos</div>
+          <div class="side-link">Relatório</div>
+        </aside>
+        <div class="preview-main">
+          <div class="mini-kpis">
+            <div class="mini-kpi"><span>Receita</span><strong>R$ 8.200</strong></div>
+            <div class="mini-kpi"><span>Meus gastos</span><strong>R$ 3.200</strong></div>
+            <div class="mini-kpi"><span>Família</span><strong>R$ 800</strong></div>
+            <div class="mini-kpi"><span>Saldo</span><strong>R$ 4.200</strong></div>
+          </div>
+          <div class="mini-chart">
+            <p>Receitas x Gastos</p>
+            <div class="mini-bars">
+              <div class="bar-group"><span class="bar in" style="height: 58%"></span><span class="bar out" style="height: 36%"></span></div>
+              <div class="bar-group"><span class="bar in" style="height: 58%"></span><span class="bar out" style="height: 42%"></span></div>
+              <div class="bar-group"><span class="bar in" style="height: 58%"></span><span class="bar out" style="height: 48%"></span></div>
+              <div class="bar-group"><span class="bar in" style="height: 58%"></span><span class="bar out" style="height: 40%"></span></div>
+              <div class="bar-group"><span class="bar in dim" style="height: 58%"></span><span class="bar out dim" style="height: 0%"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="features section-container" id="features">
+    <p class="section-kicker reveal">Funcionalidades</p>
+    <h2 class="section-title reveal reveal-delay-1">Tudo que importa para clareza financeira</h2>
+    <div class="feature-grid reveal reveal-delay-2">
+      <article class="feature-card" *ngFor="let card of featureCards">
+        <div class="feature-icon"><i [class]="card.iconClass"></i></div>
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.body }}</p>
+        <span>{{ card.tag }}</span>
+      </article>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <div class="section-container">
+      <p class="section-kicker reveal">Como funciona</p>
+      <h2 class="section-title reveal reveal-delay-1">Simples no dia a dia, completo no controle</h2>
+      <div class="steps-grid">
+        <article class="step-card reveal" [ngClass]="'reveal-delay-' + (i + 1)" *ngFor="let step of steps; index as i">
+          <div class="step-num">0{{ i + 1 }}</div>
+          <p>{{ step }}</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="family section-container" id="family">
+    <div>
+      <p class="section-kicker reveal">Para a família</p>
+      <h2 class="section-title reveal reveal-delay-1">Compartilhe extratos sem abrir sua conta</h2>
+      <p class="family-copy reveal reveal-delay-2">Gere links temporários por familiar, com expiração automática e dados isolados por perfil.</p>
+    </div>
+    <article class="phone-card reveal reveal-delay-3">
+      <header>
+        <strong>Isa · Abril 2026</strong>
+        <span>Link expira em 6 dias</span>
+      </header>
+      <ul>
+        <li><span>C&A</span><strong>R$ 159,90</strong></li>
+        <li><span>Salão</span><strong>R$ 200,00</strong></li>
+        <li><span>Farmácia</span><strong>R$ 300,00</strong></li>
+      </ul>
+      <p>Total R$ 659,90</p>
+    </article>
+  </section>
+
+  <section class="auth section-container" id="auth">
+    <p class="section-kicker reveal">Acesso</p>
+    <h2 class="section-title reveal reveal-delay-1">Comece agora ou entre na sua conta</h2>
+    <div class="auth-grid reveal reveal-delay-2">
+      <article class="auth-card featured">
+        <h3>Criar conta</h3>
+        <p>Grátis, sem cartão de crédito.</p>
+        <ui-button routerLink="/auth" [queryParams]="{ mode: 'sign-up' }">Criar minha conta</ui-button>
+      </article>
+      <article class="auth-card">
+        <h3>Entrar</h3>
+        <p>Retome seu painel financeiro.</p>
+        <ui-button variant="secondary" routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Entrar agora</ui-button>
+      </article>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="section-container footer-inner">
+      <span>© 2026 HERMES Finance</span>
+      <a routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Entrar</a>
+    </div>
+  </footer>
+</div>
+
