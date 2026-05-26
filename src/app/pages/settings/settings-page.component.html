@@ -55,10 +55,54 @@
       </ui-card>
 
       <ui-card class="panel">
-        <h2>Categorias</h2>
-        <ul class="plain-list">
-          <li *ngFor="let category of snapshot.categories">{{ category }}</li>
-        </ul>
+        <div class="card-head">
+          <h2>Categorias</h2>
+          <button type="button" class="ghost-btn" (click)="openCreateCategoryForm()">+ Adicionar</button>
+        </div>
+
+        @if (categoriesLoading) {
+          <p class="helper-copy">Carregando categorias...</p>
+        }
+
+        @if (!categoriesLoading) {
+          <ul class="plain-list">
+            <li *ngFor="let category of categories" [class.inactive]="!category.active">
+              <div class="member-main">
+                <span class="member-dot" [style.background]="category.colorHex || '#64748B'"></span>
+                <div>
+                  <strong>{{ getCategoryIcon(category.icon) }} {{ category.name }}</strong>
+                  <p>{{ category.isDefault ? 'Sistema' : 'Personalizada' }}</p>
+                </div>
+              </div>
+              <div class="member-actions">
+                <button type="button" class="link-btn" (click)="openEditCategoryForm(category)" [disabled]="category.isDefault">Editar</button>
+                <button type="button" class="link-btn danger" (click)="deleteCategory(category)" [disabled]="category.isDefault">Remover</button>
+              </div>
+            </li>
+          </ul>
+        }
+
+        @if (showCategoryForm) {
+          <div class="member-form">
+            <label>Nome
+              <input type="text" [(ngModel)]="categoryForm.name" maxlength="100" />
+            </label>
+            <label>Ícone
+              <input type="text" [(ngModel)]="categoryForm.icon" maxlength="50" />
+            </label>
+            <label>Cor
+              <input type="color" [(ngModel)]="categoryForm.colorHex" />
+            </label>
+            <div class="form-actions">
+              <button type="button" class="ghost-btn" (click)="cancelCategoryForm()">Cancelar</button>
+              <button type="button" class="solid-btn" (click)="saveCategory()">Salvar</button>
+            </div>
+          </div>
+        }
+
+        @if (categoriesError) {
+          <p class="error-copy">{{ categoriesError }}</p>
+        }
       </ui-card>
 
       <ui-card class="panel budget-panel">
