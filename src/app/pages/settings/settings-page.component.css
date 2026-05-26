@@ -124,6 +124,14 @@ header p {
   padding: 0.5rem 0.6rem;
 }
 
+.member-form input[type='color'] {
+  width: 60px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

@@ -1,10 +1,13 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { AsyncPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { SettingsFacade } from '../../core/facades/settings.facade';
 import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
 import { FamilyMembersFacade } from '../../core/facades/family-members.facade';
 import { FamilyMember } from '../../core/models/family-member.model';
+import { CategoriesFacade } from '../../core/facades/categories.facade';
+import { ExpenseCategory } from '../../core/models/expense-category.model';
 
 @Component({
   selector: 'app-settings-page',
@@ -19,6 +22,9 @@ export class SettingsPageComponent {
   familyMembers: FamilyMember[] = [];
   familyLoading = false;
   familyError = '';
+  categories: ExpenseCategory[] = [];
+  categoriesLoading = false;
+  categoriesError = '';
 
   showForm = false;
   editingId: string | null = null;
@@ -27,11 +33,21 @@ export class SettingsPageComponent {
     relation: ''
   };
 
+  showCategoryForm = false;
+  editingCategoryId: string | null = null;
+  categoryForm = {
+    name: '',
+    icon: 'shapes',
+    colorHex: '#64748B'
+  };
+
   constructor(
     private readonly settingsFacade: SettingsFacade,
-    private readonly familyFacade: FamilyMembersFacade
+    private readonly familyFacade: FamilyMembersFacade,
+    private readonly categoriesFacade: CategoriesFacade
   ) {
     this.loadFamilyMembers();
+    this.loadCategories();
   }
 
   loadFamilyMembers() {
@@ -112,6 +128,117 @@ export class SettingsPageComponent {
         this.familyError = 'Não foi possível desativar o membro.';
       }
     });
+  }
+
+  loadCategories() {
+    this.categoriesLoading = true;
+    this.categoriesError = '';
+
+    this.categoriesFacade.list(true).subscribe({
+      next: (items) => {
+        this.categories = items;
+        this.categoriesLoading = false;
+      },
+      error: () => {
+        this.categoriesLoading = false;
+        this.categoriesError = 'Não foi possível carregar as categorias.';
+      }
+    });
+  }
+
+  openCreateCategoryForm() {
+    this.showCategoryForm = true;
+    this.editingCategoryId = null;
+    this.categoryForm = { name: '', icon: 'shapes', colorHex: '#64748B' };
+  }
+
+  openEditCategoryForm(category: ExpenseCategory) {
+    if (category.isDefault) {
+      return;
+    }
+
+    this.showCategoryForm = true;
+    this.editingCategoryId = category.id;
+    this.categoryForm = {
+      name: category.name,
+      icon: category.icon || 'shapes',
+      colorHex: category.colorHex || '#64748B'
+    };
+  }
+
+  cancelCategoryForm() {
+    this.showCategoryForm = false;
+    this.editingCategoryId = null;
+  }
+
+  saveCategory() {
+    const payload = {
+      name: this.categoryForm.name.trim(),
+      icon: this.categoryForm.icon.trim() || 'shapes',
+      colorHex: this.categoryForm.colorHex
+    };
+
+    if (!payload.name) {
+      this.categoriesError = 'Nome da categoria é obrigatório.';
+      return;
+    }
+
+    const request$ = this.editingCategoryId
+      ? this.categoriesFacade.update(this.editingCategoryId, payload)
+      : this.categoriesFacade.create(payload);
+
+    request$.subscribe({
+      next: () => {
+        this.cancelCategoryForm();
+        this.loadCategories();
+      },
+      error: () => {
+        this.categoriesError = 'Não foi possível salvar a categoria.';
+      }
+    });
+  }
+
+  deleteCategory(category: ExpenseCategory) {
+    if (category.isDefault) {
+      this.categoriesError = 'Categorias do sistema não podem ser removidas.';
+      return;
+    }
+
+    const shouldDelete = window.confirm(`Remover categoria "${category.name}"?`);
+    if (!shouldDelete) {
+      return;
+    }
+
+    this.categoriesFacade.delete(category.id).subscribe({
+      next: () => this.loadCategories(),
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 409) {
+          this.categoriesError = 'Categoria em uso: ela foi desativada e não pode ser removida.';
+          this.loadCategories();
+          return;
+        }
+        if (error.status === 403) {
+          this.categoriesError = 'Sem permissão para remover esta categoria.';
+          return;
+        }
+        this.categoriesError = 'Não foi possível remover a categoria.';
+      }
+    });
+  }
+
+  getCategoryIcon(icon: string | null): string {
+    const map: Record<string, string> = {
+      utensils: '🍽️',
+      home: '🏠',
+      car: '🚗',
+      'heart-pulse': '❤️',
+      'party-popper': '🎉',
+      shapes: '🔷',
+      bag: '👜',
+      cart: '🛒',
+      school: '🎓'
+    };
+    return map[icon ?? ''] || '🏷️';
   }
 
   getMemberColor(member: FamilyMember): string {

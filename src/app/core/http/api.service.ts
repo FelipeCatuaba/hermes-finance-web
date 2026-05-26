@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { HealthStatus } from '../models/dashboard.model';
 import { FamilyMember, FamilyMemberUpsertRequest } from '../models/family-member.model';
+import { ExpenseCategory, ExpenseCategoryUpsertRequest } from '../models/expense-category.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -31,5 +32,23 @@ export class ApiService {
 
   deactivateFamilyMember(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/api/family-members/${id}`);
+  }
+
+  getCategories(includeInactive = false): Observable<ExpenseCategory[]> {
+    return this.http.get<ExpenseCategory[]>(`${this.baseUrl}/api/categories`, {
+      params: { includeInactive }
+    });
+  }
+
+  createCategory(payload: ExpenseCategoryUpsertRequest): Observable<ExpenseCategory> {
+    return this.http.post<ExpenseCategory>(`${this.baseUrl}/api/categories`, payload);
+  }
+
+  updateCategory(id: string, payload: ExpenseCategoryUpsertRequest): Observable<ExpenseCategory> {
+    return this.http.put<ExpenseCategory>(`${this.baseUrl}/api/categories/${id}`, payload);
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/categories/${id}`);
   }
 }
