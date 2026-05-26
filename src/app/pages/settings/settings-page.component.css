@@ -21,8 +21,16 @@ header p {
 }
 
 .panel h2 {
-  margin: 0 0 0.8rem;
+  margin: 0;
   font-size: 1rem;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
 }
 
 .plain-list {
@@ -37,6 +45,104 @@ header p {
   border-bottom: 1px solid var(--color-hairline-soft);
   padding-bottom: 0.45rem;
   color: var(--color-body);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.member-main {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.member-main strong {
+  color: var(--color-ink);
+  font-size: 0.85rem;
+}
+
+.member-main p {
+  margin: 0.12rem 0 0;
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.member-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.member-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.link-btn,
+.ghost-btn,
+.solid-btn {
+  border-radius: 8px;
+  border: 1px solid var(--color-hairline-soft);
+  background: transparent;
+  color: var(--color-body);
+  font-size: 0.74rem;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+}
+
+.solid-btn {
+  background: var(--color-primary);
+  border-color: transparent;
+  color: #fff;
+}
+
+.link-btn.danger {
+  color: #f78598;
+}
+
+.member-form {
+  margin-top: 0.75rem;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 12px;
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.member-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+}
+
+.member-form input[type='text'] {
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 8px;
+  background: var(--color-surface-dark);
+  color: var(--color-ink);
+  padding: 0.5rem 0.6rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.inactive {
+  opacity: 0.55;
+}
+
+.helper-copy {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.error-copy {
+  margin-top: 0.6rem;
+  color: #f78598;
+  font-size: 0.76rem;
 }
 
 .budget-panel {
@@ -44,7 +150,7 @@ header p {
 }
 
 .value {
-  margin: 0;
+  margin: 0.6rem 0 0;
   font-family: var(--font-mono);
   font-size: 1.45rem;
 }
@@ -52,7 +158,7 @@ header p {
 .security-copy {
   color: var(--color-body);
   line-height: 1.6;
-  margin: 0;
+  margin: 0.6rem 0 0;
 }
 
 @media (max-width: 900px) {
@@ -60,4 +166,3 @@ header p {
     grid-template-columns: 1fr;
   }
 }
-
