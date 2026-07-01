@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { AsyncPipe, NgFor } from '@angular/common';
+import { switchMap } from 'rxjs';
 import { DashboardFacade } from '../../core/facades/dashboard.facade';
+import { MonthService } from '../../core/services/month.service';
 import { UiKpiCardComponent } from '../../shared/ui/kpi-card/ui-kpi-card.component';
 import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
 
@@ -12,11 +14,13 @@ import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
   styleUrl: './dashboard-page.component.css'
 })
 export class DashboardPageComponent {
-  readonly month = signal(new Date().getMonth() + 1);
-  readonly year = signal(new Date().getFullYear());
-
   readonly health$ = this.dashboardFacade.getHealth();
-  readonly snapshot$ = this.dashboardFacade.getDashboardSnapshot(this.month(), this.year());
+  readonly snapshot$ = this.monthService.period$.pipe(
+    switchMap(({ month, year }) => this.dashboardFacade.getDashboardSnapshot(month, year))
+  );
 
-  constructor(private readonly dashboardFacade: DashboardFacade) {}
+  constructor(
+    private readonly dashboardFacade: DashboardFacade,
+    private readonly monthService: MonthService
+  ) {}
 }

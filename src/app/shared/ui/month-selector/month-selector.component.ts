@@ -1,16 +1,34 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgFor } from '@angular/common';
+import { Component } from '@angular/core';
+import { MonthService } from '../../../core/services/month.service';
 
 @Component({
   selector: 'ui-month-selector',
   standalone: true,
-  imports: [NgFor],
   template: `
-    <label class="month-selector" for="month-selector-input">M�s
-      <select id="month-selector-input" [value]="selectedMonth" (change)="onMonthChange($event)">
-        <option *ngFor="let label of monthLabels; index as i" [value]="i + 1">{{ label }} / {{ year }}</option>
-      </select>
-    </label>
+    <div class="month-selector" aria-label="Navegação mensal">
+      <button type="button" class="nav-button" aria-label="Mês anterior" (click)="monthService.goToPrev()">‹</button>
+
+      <label class="period-picker" for="month-selector-input">
+        <span>{{ monthService.label() }}</span>
+        <input
+          id="month-selector-input"
+          type="month"
+          min="2000-01"
+          [max]="monthService.maxInputValue()"
+          [value]="monthService.inputValue()"
+          aria-label="Selecionar mês e ano"
+          (change)="onMonthChange($event)"
+        />
+      </label>
+
+      <button
+        type="button"
+        class="nav-button"
+        aria-label="Próximo mês"
+        [disabled]="!monthService.canGoNext()"
+        (click)="monthService.goToNext()"
+      >›</button>
+    </div>
   `,
   styles: [`
     .month-selector {
@@ -21,23 +39,54 @@ import { NgFor } from '@angular/common';
       gap: 8px;
     }
 
-    select {
+    .nav-button,
+    input {
       border-radius: var(--radius-pill);
       border: 1px solid var(--color-hairline);
-      padding: 10px 12px;
       background: #fff;
+    }
+
+    .nav-button {
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
+      color: var(--color-text);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .nav-button:disabled {
+      cursor: not-allowed;
+      opacity: .3;
+      pointer-events: none;
+    }
+
+    .period-picker {
+      display: grid;
+      gap: 4px;
+      min-width: 136px;
+    }
+
+    .period-picker span {
+      color: var(--color-text);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    input {
+      width: 100%;
+      color: var(--color-muted);
+      padding: 8px 10px;
     }
   `]
 })
 export class MonthSelectorComponent {
-  @Input() selectedMonth = new Date().getMonth() + 1;
-  @Input() year = new Date().getFullYear();
-  @Output() monthChange = new EventEmitter<number>();
-
-  readonly monthLabels = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  constructor(readonly monthService: MonthService) {}
 
   onMonthChange(event: Event) {
-    const value = Number((event.target as HTMLSelectElement).value);
-    this.monthChange.emit(value);
+    const [year, month] = (event.target as HTMLInputElement).value.split('-').map(Number);
+    this.monthService.setMonthYear(month, year);
   }
 }
