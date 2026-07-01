@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { HealthStatus } from '../models/dashboard.model';
 import { FamilyMember, FamilyMemberUpsertRequest } from '../models/family-member.model';
 import { ExpenseCategory, ExpenseCategoryUpsertRequest } from '../models/expense-category.model';
+import { Expense, ExpenseCreateRequest } from '../models/expense.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -50,5 +51,9 @@ export class ApiService {
 
   deleteCategory(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/api/categories/${id}`);
+  }
+
+  createExpense(payload: ExpenseCreateRequest): Observable<Expense> {
+    return this.http.post<Expense>(`${this.baseUrl}/api/expenses`, payload);
   }
 }
