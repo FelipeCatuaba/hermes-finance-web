@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LandingPageComponent } from './pages/landing/landing-page.component';
 import { AuthPageComponent } from './pages/auth/auth-page.component';
 import { authGuard } from './core/auth/auth.guard';
+import { publicAuthResetGuard } from './core/auth/public-auth-reset.guard';
 import { AppLayoutComponent } from './layouts/app-layout.component';
 import { DashboardPageComponent } from './pages/dashboard/dashboard-page.component';
 import { SettingsPageComponent } from './pages/settings/settings-page.component';
@@ -12,7 +13,7 @@ import { InstallmentsPageComponent } from './pages/installments/installments-pag
 import { ReportsPageComponent } from './pages/reports/reports-page.component';
 
 export const routes: Routes = [
-  { path: '', component: LandingPageComponent, pathMatch: 'full' },
+  { path: '', component: LandingPageComponent, pathMatch: 'full', canActivate: [publicAuthResetGuard] },
   { path: 'auth', component: AuthPageComponent },
   {
     path: '',

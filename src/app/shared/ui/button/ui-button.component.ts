@@ -6,7 +6,7 @@ import { NgClass } from '@angular/common';
   standalone: true,
   imports: [NgClass],
   template: `
-    <button [type]="type" [ngClass]="buttonClass" class="ui-button">
+    <button [type]="type" [disabled]="disabled" [ngClass]="buttonClass" class="ui-button">
       <ng-content />
     </button>
   `,
@@ -27,11 +27,17 @@ import { NgClass } from '@angular/common';
     .primary:hover { background: var(--color-primary-active); }
     .secondary { background: var(--color-surface-strong); color: var(--color-ink); }
     .dark { background: var(--color-surface-dark-elevated); color: #fff; }
+    .ui-button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
   `]
 })
 export class UiButtonComponent {
   @Input() variant: 'primary' | 'secondary' | 'dark' = 'primary';
   @Input() type: 'button' | 'submit' = 'button';
+  @Input() disabled = false;
 
   get buttonClass() {
     return this.variant;

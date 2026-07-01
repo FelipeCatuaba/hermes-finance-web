@@ -75,10 +75,70 @@
   padding: 0.7rem 0.85rem;
 }
 
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 42px;
+  border: none;
+  border-left: 1px solid var(--color-hairline-soft);
+  border-radius: 0 12px 12px 0;
+  background: transparent;
+  color: var(--color-body);
+  font-size: 0.95rem;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 2.8rem;
+}
+
 .check-row {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 0.5rem;
+}
+
+.field-status {
+  margin: -0.15rem 0 0.15rem;
+  font-size: 0.74rem;
+  color: var(--color-muted);
+}
+
+.field-status.ok {
+  color: #0fd4b0;
+}
+
+.field-status.bad {
+  color: #f78598;
+}
+
+.password-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0.1rem 0 0.3rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.password-checklist li {
+  font-size: 0.74rem;
+  color: var(--color-muted);
+}
+
+.password-checklist li.ok {
+  color: #0fd4b0;
 }
 
 .divider {
@@ -118,6 +178,11 @@
   cursor: pointer;
 }
 
+.sso-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .status-message {
   margin-top: 0.9rem;
   font-size: 0.82rem;
@@ -132,6 +197,74 @@
   color: #8ba5ff;
   text-decoration: none;
   font-size: 0.88rem;
+}
+
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 12, 0.72);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  z-index: 80;
+  padding: 1rem;
+}
+
+.popup-card {
+  width: min(480px, 100%);
+  border: 1px solid var(--color-hairline);
+  border-radius: 16px;
+  background: var(--color-surface-soft);
+  box-shadow: var(--shadow-soft);
+  padding: 1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.popup-card h3 {
+  margin: 0;
+}
+
+.popup-card p {
+  margin: 0;
+  color: var(--color-body);
+}
+
+.verify-label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--color-body);
+}
+
+.verify-label input {
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 12px;
+  background: var(--color-surface-dark);
+  color: var(--color-ink);
+  padding: 0.7rem 0.85rem;
+}
+
+.verify-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.resend-link {
+  border: none;
+  background: transparent;
+  color: #8ba5ff;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.resend-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 960px) {
