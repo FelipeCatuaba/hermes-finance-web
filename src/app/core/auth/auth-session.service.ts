@@ -8,6 +8,12 @@ interface AuthState {
   userId: string | null;
 }
 
+export interface AuthActionResult {
+  ok: boolean;
+  requiresEmailVerification?: boolean;
+  message?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
   private clerk: Clerk | null = null;
@@ -37,24 +43,11 @@ export class AuthSessionService {
   private syncState(): void {
     const session = this.clerk?.session ?? null;
     const user = this.clerk?.user ?? null;
-
     this.stateSignal.set({
       isLoaded: true,
       isAuthenticated: Boolean(session),
       userId: user?.id ?? null
     });
-  }
-
-  async getToken(): Promise<string | null> {
-    if (!this.state().isLoaded) {
-      await this.init();
-    }
-
-    if (!this.clerk?.session) {
-      return null;
-    }
-
-    return this.clerk.session.getToken();
   }
 
   async ensureAuthenticated(): Promise<boolean> {
@@ -65,6 +58,16 @@ export class AuthSessionService {
     return this.state().isAuthenticated;
   }
 
+  async getToken(): Promise<string | null> {
+    if (!this.state().isLoaded) {
+      await this.init();
+    }
+    if (!this.clerk?.session) {
+      return null;
+    }
+    return this.clerk.session.getToken();
+  }
+
   async signOut(): Promise<void> {
     if (this.clerk?.session) {
       await this.clerk.signOut();
@@ -72,55 +75,115 @@ export class AuthSessionService {
     this.syncState();
   }
 
-  async signInWithPassword(email: string, password: string): Promise<{ ok: boolean; message?: string }> {
+  async signInWithPassword(email: string, password: string): Promise<AuthActionResult> {
     await this.init();
     if (!this.clerk?.client) {
-      return { ok: false, message: 'Serviço de autenticação indisponível.' };
+      return { ok: false, message: 'Não foi possível autenticar agora.' };
     }
 
-    const signIn = await this.clerk.client.signIn.create({
-      identifier: email,
-      password
-    } as any);
+    try {
+      const signIn = await this.clerk.client.signIn.create({
+        identifier: email,
+        password
+      } as any);
 
-    if (signIn.status === 'complete' && signIn.createdSessionId) {
-      await this.clerk.setActive({ session: signIn.createdSessionId });
-      this.syncState();
-      return { ok: true };
+      if (signIn.status === 'complete' && signIn.createdSessionId) {
+        await this.clerk.setActive({ session: signIn.createdSessionId });
+        this.syncState();
+        const synced = await this.ensureBackendAccess();
+        if (!synced) {
+          await this.signOut();
+          return { ok: false, message: 'Não foi possível concluir seu acesso agora. Tente novamente em instantes.' };
+        }
+        return { ok: true };
+      }
+
+      return { ok: false, message: 'Não foi possível concluir seu acesso agora.' };
+    } catch (error: any) {
+      return { ok: false, message: this.extractClerkError(error, 'Não foi possível concluir seu acesso agora.') };
     }
-
-    return { ok: false, message: 'Não foi possível concluir o login agora.' };
   }
 
-  async signUpWithPassword(name: string, email: string, password: string): Promise<{ ok: boolean; message?: string }> {
+  async signUpWithPassword(name: string, email: string, password: string): Promise<AuthActionResult> {
     await this.init();
     if (!this.clerk?.client) {
-      return { ok: false, message: 'Serviço de autenticação indisponível.' };
+      return { ok: false, message: 'Não foi possível iniciar o cadastro agora.' };
     }
 
-    const [firstName, ...rest] = name.trim().split(' ');
-    const lastName = rest.join(' ') || undefined;
+    try {
+      const [firstName, ...rest] = name.trim().split(' ');
+      const lastName = rest.join(' ') || undefined;
 
-    const signUp = await this.clerk.client.signUp.create({
-      firstName,
-      lastName,
-      emailAddress: email,
-      password
-    } as any);
+      const signUp = await this.clerk.client.signUp.create({
+        firstName,
+        lastName,
+        emailAddress: email,
+        password
+      } as any);
 
-    if (signUp.status === 'complete' && signUp.createdSessionId) {
-      await this.clerk.setActive({ session: signUp.createdSessionId });
-      this.syncState();
-      return { ok: true };
+      if (signUp.status === 'complete' && signUp.createdSessionId) {
+        await this.clerk.setActive({ session: signUp.createdSessionId });
+        this.syncState();
+        const synced = await this.ensureBackendAccess();
+        if (!synced) {
+          await this.signOut();
+          return { ok: false, message: 'Cadastro realizado, mas ainda não foi possível liberar seu acesso. Tente novamente em instantes.' };
+        }
+        return { ok: true };
+      }
+
+      await this.prepareSignUpEmailCode();
+      return { ok: false, requiresEmailVerification: true };
+    } catch (error: any) {
+      return { ok: false, message: this.extractClerkError(error, 'Não foi possível iniciar o cadastro agora.') };
     }
-
-    return { ok: false, message: 'Cadastro iniciado. Verifique as próximas etapas de validação.' };
   }
 
-  async startSocialSignIn(
-    provider: 'google' | 'apple',
-    mode: 'sign-in' | 'sign-up'
-  ): Promise<void> {
+  async verifySignUpEmailCode(code: string): Promise<AuthActionResult> {
+    await this.init();
+    if (!this.clerk?.client?.signUp) {
+      return { ok: false, message: 'Sessão de cadastro expirada. Recomece o cadastro.' };
+    }
+
+    try {
+      const result = await this.clerk.client.signUp.attemptEmailAddressVerification({ code } as any);
+      if (result.status === 'complete' && result.createdSessionId) {
+        await this.clerk.setActive({ session: result.createdSessionId });
+        this.syncState();
+        const synced = await this.ensureBackendAccess();
+        if (!synced) {
+          await this.signOut();
+          return { ok: false, message: 'Código validado, mas seu acesso ainda não pôde ser liberado. Tente novamente em instantes.' };
+        }
+        return { ok: true };
+      }
+
+      return { ok: false, message: 'Código inválido ou expirado.' };
+    } catch (error: any) {
+      return { ok: false, message: this.extractClerkError(error, 'Código inválido ou expirado.') };
+    }
+  }
+
+  async resendSignUpEmailCode(): Promise<AuthActionResult> {
+    try {
+      await this.prepareSignUpEmailCode();
+      return { ok: true };
+    } catch {
+      return { ok: false, message: 'Não foi possível reenviar o código agora.' };
+    }
+  }
+
+  private async prepareSignUpEmailCode(): Promise<void> {
+    await this.init();
+    if (!this.clerk?.client?.signUp) {
+      throw new Error('Signup state unavailable');
+    }
+    await this.clerk.client.signUp.prepareEmailAddressVerification({
+      strategy: 'email_code'
+    } as any);
+  }
+
+  async startSocialSignIn(provider: 'google' | 'apple', mode: 'sign-in' | 'sign-up'): Promise<void> {
     await this.init();
     if (!this.clerk?.client) {
       throw new Error('Serviço de autenticação indisponível.');
@@ -131,19 +194,10 @@ export class AuthSessionService {
     const redirectUrlComplete = `${window.location.origin}/dashboard`;
 
     if (mode === 'sign-up') {
-      await this.clerk.client.signUp.authenticateWithRedirect({
-        strategy,
-        redirectUrl,
-        redirectUrlComplete
-      } as any);
+      await this.clerk.client.signUp.authenticateWithRedirect({ strategy, redirectUrl, redirectUrlComplete } as any);
       return;
     }
-
-    await this.clerk.client.signIn.authenticateWithRedirect({
-      strategy,
-      redirectUrl,
-      redirectUrlComplete
-    } as any);
+    await this.clerk.client.signIn.authenticateWithRedirect({ strategy, redirectUrl, redirectUrlComplete } as any);
   }
 
   async handleRedirectCallbackIfPresent(): Promise<boolean> {
@@ -157,108 +211,51 @@ export class AuthSessionService {
       search.includes('__clerk') ||
       search.includes('oauth') ||
       search.includes('rotating_token_nonce');
-
     if (!maybeOAuthReturn) {
       return false;
     }
 
     await this.clerk.handleRedirectCallback();
     this.syncState();
+    const synced = await this.ensureBackendAccess();
+    if (!synced) {
+      await this.signOut();
+      return false;
+    }
     return true;
   }
 
-  async mountSignIn(element: HTMLDivElement): Promise<void> {
-    if (!this.state().isLoaded) {
-      await this.init();
+  private async ensureBackendAccess(): Promise<boolean> {
+    const token = await this.getToken();
+    if (!token) {
+      return false;
     }
 
-    if (!this.clerk) {
-      return;
+    const endpoint = `${environment.apiBaseUrl.replace(/\/$/, '')}/api/family-members?includeInactive=true`;
+    const maxAttempts = 6;
+    for (let i = 0; i < maxAttempts; i += 1) {
+      const res = await fetch(endpoint, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        return true;
+      }
+      if (res.status !== 404) {
+        return false;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-
-    await this.clerk.mountSignIn(element, {
-      appearance: {
-        variables: {
-          colorPrimary: '#3461f5',
-          colorBackground: '#0f1320',
-          colorText: '#f0f4ff',
-          colorInputBackground: '#141928',
-          colorInputText: '#f0f4ff',
-          colorNeutral: '#a8b5d4',
-          borderRadius: '12px'
-        },
-        elements: {
-          card: 'shadow-none border border-slate-700 bg-transparent',
-          headerTitle: 'text-white',
-          headerSubtitle: 'text-slate-300',
-          formFieldLabel: 'text-slate-200',
-          socialButtonsBlockButton: 'border border-slate-600 bg-slate-900 text-slate-100',
-          formFieldInput: 'border border-slate-700 bg-slate-900 text-slate-100',
-          formButtonPrimary: 'bg-blue-600 hover:bg-blue-500 text-white',
-          dividerLine: 'bg-slate-700',
-          dividerText: 'text-slate-400',
-          footerActionText: 'text-slate-400',
-          footerActionLink: 'text-blue-300'
-        }
-      },
-      layout: {
-        socialButtonsPlacement: 'bottom',
-        socialButtonsVariant: 'blockButton'
-      },
-      signUpUrl: '/auth?mode=sign-up',
-      afterSignInUrl: '/dashboard'
-    } as any);
+    return false;
   }
 
-  async mountSignUp(element: HTMLDivElement): Promise<void> {
-    if (!this.state().isLoaded) {
-      await this.init();
+  private extractClerkError(error: any, fallback: string): string {
+    const firstMessage = error?.errors?.[0]?.longMessage
+      || error?.errors?.[0]?.message
+      || error?.message;
+    if (!firstMessage || typeof firstMessage !== 'string') {
+      return fallback;
     }
-
-    if (!this.clerk) {
-      return;
-    }
-
-    await this.clerk.mountSignUp(element, {
-      appearance: {
-        variables: {
-          colorPrimary: '#3461f5',
-          colorBackground: '#0f1320',
-          colorText: '#f0f4ff',
-          colorInputBackground: '#141928',
-          colorInputText: '#f0f4ff',
-          colorNeutral: '#a8b5d4',
-          borderRadius: '12px'
-        },
-        elements: {
-          card: 'shadow-none border border-slate-700 bg-transparent',
-          headerTitle: 'text-white',
-          headerSubtitle: 'text-slate-300',
-          formFieldLabel: 'text-slate-200',
-          socialButtonsBlockButton: 'border border-slate-600 bg-slate-900 text-slate-100',
-          formFieldInput: 'border border-slate-700 bg-slate-900 text-slate-100',
-          formButtonPrimary: 'bg-blue-600 hover:bg-blue-500 text-white',
-          dividerLine: 'bg-slate-700',
-          dividerText: 'text-slate-400',
-          footerActionText: 'text-slate-400',
-          footerActionLink: 'text-blue-300'
-        }
-      },
-      layout: {
-        socialButtonsPlacement: 'bottom',
-        socialButtonsVariant: 'blockButton'
-      },
-      signInUrl: '/auth?mode=sign-in',
-      afterSignUpUrl: '/dashboard'
-    } as any);
-  }
-
-  unmountAuthWidget(element: HTMLDivElement): void {
-    if (!this.clerk) {
-      return;
-    }
-
-    this.clerk.unmountSignIn(element);
-    this.clerk.unmountSignUp(element);
+    return firstMessage;
   }
 }

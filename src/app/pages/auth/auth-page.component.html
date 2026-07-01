@@ -1,30 +1,48 @@
 ﻿<section class="auth-page">
   <div class="section-container auth-content">
     <p class="section-kicker">Acesso</p>
-    <h1 class="section-title">{{ isSignUp() ? 'Criar conta' : 'Entrar' }}</h1>
+    <h1 class="section-title">{{ isSignUp ? 'Criar conta' : 'Entrar' }}</h1>
 
     <div class="auth-grid">
       <article class="auth-card featured">
-        <h2>{{ isSignUp() ? 'Novo por aqui?' : 'Bem-vindo de volta' }}</h2>
+        <h2>{{ isSignUp ? 'Novo por aqui?' : 'Bem-vindo de volta' }}</h2>
         <p>
-          {{ isSignUp()
+          {{ isSignUp
             ? 'Crie sua conta para começar a organizar suas finanças com clareza.'
             : 'Acesse seu painel financeiro e continue de onde parou.' }}
         </p>
 
-        @if (!isSignUp()) {
+        @if (!isSignUp) {
           <form [formGroup]="signInForm" (ngSubmit)="submitSignIn()" class="auth-form">
             <label>Email
               <input type="email" formControlName="email" placeholder="seu@email.com" />
             </label>
+            <p class="field-status" [ngClass]="{ bad: signInForm.controls.email.touched && !signInEmailValid }">
+              {{ signInForm.controls.email.touched && !signInEmailValid ? 'Formato de email inválido' : '' }}
+            </p>
             <label>Senha
-              <input type="password" formControlName="password" placeholder="mínimo 8 caracteres" />
+              <div class="password-field">
+                <input [type]="showSignInPassword() ? 'text' : 'password'" formControlName="password" placeholder="mínimo 8 caracteres" autocomplete="current-password" />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  [attr.title]="showSignInPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  (click)="toggleSignInPasswordVisibility()"
+                >
+                  <i class="bi" [ngClass]="showSignInPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
             </label>
+            <p class="field-status" [ngClass]="{ ok: signInPasswordValid, bad: signInForm.controls.password.touched && !signInPasswordValid }">
+              {{ signInPasswordValid ? 'Senha no padrão correto' : 'Senha com 8+ caracteres, maiúscula, minúscula, número e símbolo' }}
+            </p>
             <label class="check-row">
               <input type="checkbox" formControlName="remember" />
               <span>Lembrar de mim</span>
             </label>
-            <ui-button type="submit">Entrar</ui-button>
+            <ui-button type="submit" [disabled]="!canSubmitSignIn">
+              {{ isSubmitting() ? 'Entrando...' : 'Entrar' }}
+            </ui-button>
           </form>
         } @else {
           <form [formGroup]="signUpForm" (ngSubmit)="submitSignUp()" class="auth-form">
@@ -34,17 +52,52 @@
             <label>Email
               <input type="email" formControlName="email" placeholder="seu@email.com" />
             </label>
+            <p class="field-status" [ngClass]="{ bad: signUpForm.controls.email.touched && !signUpEmailValid }">
+              {{ signUpForm.controls.email.touched && !signUpEmailValid ? 'Formato de email inválido' : '' }}
+            </p>
             <label>Senha
-              <input type="password" formControlName="password" placeholder="mínimo 8 caracteres" />
+              <div class="password-field">
+                <input [type]="showSignUpPassword() ? 'text' : 'password'" formControlName="password" placeholder="mínimo 8 caracteres" autocomplete="new-password" />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  [attr.title]="showSignUpPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  (click)="toggleSignUpPasswordVisibility()"
+                >
+                  <i class="bi" [ngClass]="showSignUpPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
             </label>
+            <ul class="password-checklist">
+              <li [ngClass]="{ ok: passwordChecks.minLen }">Mínimo de 8 caracteres</li>
+              <li [ngClass]="{ ok: passwordChecks.upper }">Pelo menos 1 letra maiúscula</li>
+              <li [ngClass]="{ ok: passwordChecks.lower }">Pelo menos 1 letra minúscula</li>
+              <li [ngClass]="{ ok: passwordChecks.digit }">Pelo menos 1 número</li>
+              <li [ngClass]="{ ok: passwordChecks.symbol }">Pelo menos 1 símbolo</li>
+            </ul>
             <label>Confirmar senha
-              <input type="password" formControlName="confirmPassword" placeholder="repita sua senha" />
+              <div class="password-field">
+                <input [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" placeholder="repita sua senha" autocomplete="new-password" />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  [attr.title]="showConfirmPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  (click)="toggleConfirmPasswordVisibility()"
+                >
+                  <i class="bi" [ngClass]="showConfirmPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
             </label>
+            <p class="field-status" [ngClass]="{ ok: confirmMatches, bad: signUpForm.controls.confirmPassword.touched && !confirmMatches }">
+              {{ signUpForm.controls.confirmPassword.touched ? (confirmMatches ? 'Senhas iguais' : 'Senhas diferentes') : '' }}
+            </p>
             <label class="check-row">
               <input type="checkbox" formControlName="acceptTerms" />
               <span>Concordo com os termos de uso</span>
             </label>
-            <ui-button type="submit">Criar conta</ui-button>
+            <ui-button type="submit" [disabled]="!canSubmitSignUp">
+              {{ isSubmitting() ? 'Criando conta...' : 'Criar conta' }}
+            </ui-button>
           </form>
         }
 
@@ -53,11 +106,11 @@
         <div id="clerk-captcha" aria-hidden="true"></div>
 
         <div class="sso-stack">
-          <button type="button" class="sso-btn" (click)="signInWithSso('google')">
+          <button type="button" class="sso-btn" (click)="signInWithSso('google')" [disabled]="isSubmitting()">
             <i class="bi bi-google"></i>
             Continuar com Google
           </button>
-          <button type="button" class="sso-btn" (click)="signInWithSso('apple')">
+          <button type="button" class="sso-btn" (click)="signInWithSso('apple')" [disabled]="isSubmitting()">
             <i class="bi bi-apple"></i>
             Continuar com Apple
           </button>
@@ -69,9 +122,9 @@
       </article>
 
       <article class="auth-card">
-        <h2>{{ isSignUp() ? 'Já possui conta?' : 'Ainda não tem conta?' }}</h2>
+        <h2>{{ isSignUp ? 'Já possui conta?' : 'Ainda não tem conta?' }}</h2>
         <p>
-          {{ isSignUp()
+          {{ isSignUp
             ? 'Se você já possui cadastro, entre com seus dados.'
             : 'Crie sua conta gratuita em poucos segundos.' }}
         </p>
@@ -79,9 +132,9 @@
         <ui-button
           variant="secondary"
           routerLink="/auth"
-          [queryParams]="{ mode: isSignUp() ? 'sign-in' : 'sign-up' }"
+          [queryParams]="{ mode: isSignUp ? 'sign-in' : 'sign-up' }"
         >
-          {{ isSignUp() ? 'Ir para login' : 'Criar minha conta' }}
+          {{ isSignUp ? 'Ir para login' : 'Criar minha conta' }}
         </ui-button>
 
         <div class="support-links">
@@ -91,3 +144,40 @@
     </div>
   </div>
 </section>
+
+@if (popupMessage()) {
+  <div class="popup-backdrop" (click)="closePopup()">
+    <div class="popup-card" (click)="$event.stopPropagation()">
+      <h3>Não foi possível continuar</h3>
+      <p>{{ popupMessage() }}</p>
+      <ui-button type="button" (click)="closePopup()">Fechar</ui-button>
+    </div>
+  </div>
+}
+
+@if (showVerificationPopup()) {
+  <div class="popup-backdrop" (click)="closeVerificationPopup()">
+    <div class="popup-card" (click)="$event.stopPropagation()">
+      <h3>Confirmar cadastro</h3>
+      <p>Digite o código enviado para o email cadastrado para concluir seu acesso.</p>
+      <label class="verify-label">
+        Código
+        <input
+          type="text"
+          [value]="verificationCode()"
+          (input)="verificationCode.set($any($event.target).value)"
+          placeholder="000000"
+          autocomplete="one-time-code"
+        />
+      </label>
+      <div class="verify-actions">
+        <button type="button" class="resend-link" (click)="resendVerificationCode()" [disabled]="isSubmitting()">
+          Reenviar código
+        </button>
+        <ui-button type="button" (click)="confirmVerificationCode()" [disabled]="isSubmitting() || !verificationCode().trim()">
+          {{ isSubmitting() ? 'Confirmando...' : 'Confirmar código' }}
+        </ui-button>
+      </div>
+    </div>
+  </div>
+}
