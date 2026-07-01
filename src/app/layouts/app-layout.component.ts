@@ -5,11 +5,12 @@ import { UiButtonComponent } from '../shared/ui/button/ui-button.component';
 import { AuthSessionService } from '../core/auth/auth-session.service';
 import { MonthSelectorComponent } from '../shared/ui/month-selector/month-selector.component';
 import { MonthService } from '../core/services/month.service';
+import { NewExpenseFabComponent } from '../shared/features/new-expense-fab/new-expense-fab.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, UiButtonComponent, MonthSelectorComponent, NgClass],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, UiButtonComponent, MonthSelectorComponent, NewExpenseFabComponent, NgClass],
   templateUrl: './app-layout.component.html',
   styleUrl: './app-layout.component.css'
 })

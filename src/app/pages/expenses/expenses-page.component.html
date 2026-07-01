@@ -11,6 +11,14 @@
     <ui-card class="panel">
       <h2>Lançamentos recentes</h2>
       <ul>
+        <li *ngFor="let expense of createdExpenses$ | async">
+          <div>
+            <strong>{{ expense.description }}</strong>
+            <p>{{ expense.scope === 'family' ? 'Família' : 'Meu' }} · {{ expense.expenseDate | date:'dd/MM/yyyy':'UTC' }}</p>
+          </div>
+          <span>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
+        </li>
+
         <li *ngFor="let item of items">
           <div>
             <strong>{{ item.name }}</strong>

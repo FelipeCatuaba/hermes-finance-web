@@ -1,0 +1,328 @@
+import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { catchError, finalize, of } from 'rxjs';
+import { CategoriesFacade } from '../../../core/facades/categories.facade';
+import { ExpensesFacade } from '../../../core/facades/expenses.facade';
+import { FamilyMembersFacade } from '../../../core/facades/family-members.facade';
+import { MonthService } from '../../../core/services/month.service';
+import { ExpenseCategory } from '../../../core/models/expense-category.model';
+import { FamilyMember } from '../../../core/models/family-member.model';
+import { UiButtonComponent } from '../../ui/button/ui-button.component';
+
+interface ExpenseFormState {
+  description: string;
+  amount: string;
+  expenseDate: string;
+  categoryId: string;
+  familyMemberId: string;
+  paymentMethod: string;
+  notes: string;
+  isFixed: boolean;
+}
+
+@Component({
+  selector: 'app-new-expense-fab',
+  standalone: true,
+  imports: [CommonModule, FormsModule, UiButtonComponent],
+  template: `
+    <button type="button" class="fab" aria-label="Novo lançamento" (click)="open()">+</button>
+
+    <section class="sheet-backdrop" *ngIf="isOpen()" (click)="close()">
+      <form class="sheet" (click)="$event.stopPropagation()" (ngSubmit)="submit()">
+        <header>
+          <div>
+            <p>Novo lançamento</p>
+            <h2>Gasto avulso</h2>
+          </div>
+          <button type="button" class="icon-button" aria-label="Fechar" (click)="close()">×</button>
+        </header>
+
+        <label>
+          <span>Descrição</span>
+          <input name="description" required maxlength="255" [(ngModel)]="form.description" />
+        </label>
+
+        <div class="field-grid">
+          <label>
+            <span>Valor</span>
+            <input name="amount" required inputmode="decimal" placeholder="0,00" [(ngModel)]="form.amount" />
+          </label>
+
+          <label>
+            <span>Data</span>
+            <input name="expenseDate" required type="date" [max]="today" [(ngModel)]="form.expenseDate" />
+          </label>
+        </div>
+
+        <div class="field-grid">
+          <label>
+            <span>Categoria</span>
+            <select name="categoryId" [(ngModel)]="form.categoryId">
+              <option value="">Sem categoria</option>
+              <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>De quem é</span>
+            <select name="familyMemberId" [(ngModel)]="form.familyMemberId">
+              <option value="">Meu</option>
+              <option *ngFor="let member of familyMembers()" [value]="member.id">{{ member.name }}</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          <span>Forma de pagamento</span>
+          <input name="paymentMethod" maxlength="50" placeholder="Pix, crédito, débito..." [(ngModel)]="form.paymentMethod" />
+        </label>
+
+        <label>
+          <span>Observações</span>
+          <textarea name="notes" rows="3" [(ngModel)]="form.notes"></textarea>
+        </label>
+
+        <label class="toggle">
+          <input name="isFixed" type="checkbox" [(ngModel)]="form.isFixed" />
+          <span>Gasto fixo mensal</span>
+        </label>
+
+        <p class="feedback error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+        <p class="feedback success" *ngIf="successMessage()">{{ successMessage() }}</p>
+
+        <footer>
+          <ui-button type="button" variant="secondary" (click)="close()">Cancelar</ui-button>
+          <ui-button type="submit" [disabled]="isSubmitting()">Salvar gasto</ui-button>
+        </footer>
+      </form>
+    </section>
+  `,
+  styles: [`
+    .fab {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 30;
+      width: 56px;
+      height: 56px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 28px;
+      line-height: 1;
+      box-shadow: var(--shadow-soft);
+      cursor: pointer;
+    }
+
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: end center;
+      padding: 16px;
+      background: rgba(4, 6, 13, 0.62);
+    }
+
+    .sheet {
+      width: min(680px, 100%);
+      max-height: min(760px, calc(100vh - 32px));
+      overflow: auto;
+      display: grid;
+      gap: 14px;
+      border: 1px solid var(--color-hairline);
+      border-radius: 18px;
+      padding: 22px;
+      background: var(--color-canvas);
+      color: var(--color-ink);
+      box-shadow: var(--shadow-soft);
+    }
+
+    header,
+    footer,
+    .field-grid {
+      display: flex;
+      gap: 12px;
+    }
+
+    header,
+    footer {
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0.2rem 0 0;
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+    }
+
+    label {
+      display: grid;
+      flex: 1;
+      gap: 7px;
+      color: var(--color-body);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--color-hairline);
+      border-radius: 10px;
+      padding: 12px 13px;
+      background: #fff;
+      color: var(--color-ink);
+      font: inherit;
+      font-weight: 500;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .icon-button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--color-hairline);
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      font-size: 22px;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .toggle input {
+      width: auto;
+    }
+
+    .feedback {
+      margin: 0;
+      font-size: 0.86rem;
+    }
+
+    .error { color: var(--color-semantic-down); }
+    .success { color: var(--color-semantic-up); }
+
+    @media (max-width: 680px) {
+      .fab {
+        right: 18px;
+        bottom: 18px;
+      }
+
+      .field-grid,
+      footer {
+        flex-direction: column;
+      }
+    }
+  `]
+})
+export class NewExpenseFabComponent {
+  readonly today = new Date().toISOString().slice(0, 10);
+  readonly isOpen = signal(false);
+  readonly isSubmitting = signal(false);
+  readonly categories = signal<ExpenseCategory[]>([]);
+  readonly familyMembers = signal<FamilyMember[]>([]);
+  readonly errorMessage = signal('');
+  readonly successMessage = signal('');
+  form: ExpenseFormState = this.initialForm();
+
+  constructor(
+    private readonly categoriesFacade: CategoriesFacade,
+    private readonly expensesFacade: ExpensesFacade,
+    private readonly familyMembersFacade: FamilyMembersFacade,
+    private readonly monthService: MonthService
+  ) {}
+
+  open(): void {
+    this.form = this.initialForm();
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    this.isOpen.set(true);
+    this.loadOptions();
+  }
+
+  close(): void {
+    this.isOpen.set(false);
+  }
+
+  submit(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    const amount = this.parseAmount(this.form.amount);
+    if (!this.form.description.trim() || !Number.isFinite(amount) || amount <= 0 || !this.form.expenseDate) {
+      this.errorMessage.set('Preencha descrição, valor e data para salvar.');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.expensesFacade.create({
+      description: this.form.description.trim(),
+      amount,
+      expenseDate: this.form.expenseDate,
+      categoryId: this.form.categoryId || null,
+      familyMemberId: this.form.familyMemberId || null,
+      paymentMethod: this.trimToNull(this.form.paymentMethod),
+      notes: this.trimToNull(this.form.notes),
+      isFixed: this.form.isFixed
+    }).pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+      next: () => {
+        this.successMessage.set('Gasto criado com sucesso.');
+        this.form = this.initialForm();
+      },
+      error: () => this.errorMessage.set('Não foi possível criar o gasto agora.')
+    });
+  }
+
+  private loadOptions(): void {
+    this.categoriesFacade.list().pipe(catchError(() => of([]))).subscribe((categories) => this.categories.set(categories));
+    this.familyMembersFacade.list().pipe(catchError(() => of([]))).subscribe((members) => this.familyMembers.set(members));
+  }
+
+  private initialForm(): ExpenseFormState {
+    const period = this.monthService.period();
+    const current = new Date();
+    const day = period.month === current.getMonth() + 1 && period.year === current.getFullYear() ? current.getDate() : 1;
+    const date = new Date(period.year, period.month - 1, day).toISOString().slice(0, 10);
+
+    return {
+      description: '',
+      amount: '',
+      expenseDate: date,
+      categoryId: '',
+      familyMemberId: '',
+      paymentMethod: '',
+      notes: '',
+      isFixed: false
+    };
+  }
+
+  private parseAmount(value: string): number {
+    const normalized = value.replace(/\./g, '').replace(',', '.');
+    return Number(normalized);
+  }
+
+  private trimToNull(value: string): string | null {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+}
