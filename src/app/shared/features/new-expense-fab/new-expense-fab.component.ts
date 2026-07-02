@@ -19,6 +19,14 @@ interface ExpenseFormState {
   paymentMethod: string;
   notes: string;
   isFixed: boolean;
+  isInstallment: boolean;
+  totalInstallments: number;
+}
+
+interface InstallmentPreviewItem {
+  number: number;
+  amount: number;
+  date: string;
 }
 
 @Component({
@@ -26,32 +34,38 @@ interface ExpenseFormState {
   standalone: true,
   imports: [CommonModule, FormsModule, UiButtonComponent],
   template: `
-    <button type="button" class="fab" aria-label="Novo lançamento" (click)="open()">+</button>
+    <button type="button" class="fab" aria-label="Novo lancamento" (click)="open()">+</button>
 
     <section class="sheet-backdrop" *ngIf="isOpen()" (click)="close()">
       <form class="sheet" (click)="$event.stopPropagation()" (ngSubmit)="submit()">
         <header>
           <div>
-            <p>Novo lançamento</p>
-            <h2>Gasto avulso</h2>
+            <p>Novo lancamento</p>
+            <h2>{{ form.isInstallment ? 'Compra parcelada' : 'Gasto avulso' }}</h2>
           </div>
-          <button type="button" class="icon-button" aria-label="Fechar" (click)="close()">×</button>
+          <button type="button" class="icon-button" aria-label="Fechar" (click)="close()">x</button>
         </header>
 
         <label>
-          <span>Descrição</span>
+          <span>Descricao</span>
           <input name="description" required maxlength="255" [(ngModel)]="form.description" />
         </label>
 
         <div class="field-grid">
           <label>
-            <span>Valor</span>
+            <span>{{ form.isInstallment ? 'Valor total' : 'Valor' }}</span>
             <input name="amount" required inputmode="decimal" placeholder="0,00" [(ngModel)]="form.amount" />
           </label>
 
           <label>
-            <span>Data</span>
-            <input name="expenseDate" required type="date" [max]="today" [(ngModel)]="form.expenseDate" />
+            <span>{{ form.isInstallment ? 'Primeira parcela' : 'Data' }}</span>
+            <input
+              name="expenseDate"
+              required
+              type="date"
+              [attr.max]="form.isInstallment ? null : today"
+              [(ngModel)]="form.expenseDate"
+            />
           </label>
         </div>
 
@@ -65,7 +79,7 @@ interface ExpenseFormState {
           </label>
 
           <label>
-            <span>De quem é</span>
+            <span>De quem e</span>
             <select name="familyMemberId" [(ngModel)]="form.familyMemberId">
               <option value="">Meu</option>
               <option *ngFor="let member of familyMembers()" [value]="member.id">{{ member.name }}</option>
@@ -75,25 +89,48 @@ interface ExpenseFormState {
 
         <label>
           <span>Forma de pagamento</span>
-          <input name="paymentMethod" maxlength="50" placeholder="Pix, crédito, débito..." [(ngModel)]="form.paymentMethod" />
+          <input name="paymentMethod" maxlength="50" placeholder="Pix, credito, debito..." [(ngModel)]="form.paymentMethod" />
         </label>
 
         <label>
-          <span>Observações</span>
-          <textarea name="notes" rows="3" [(ngModel)]="form.notes"></textarea>
+          <span>Observacoes</span>
+          <textarea name="notes" rows="3" [disabled]="form.isInstallment" [(ngModel)]="form.notes"></textarea>
         </label>
 
-        <label class="toggle">
-          <input name="isFixed" type="checkbox" [(ngModel)]="form.isFixed" />
-          <span>Gasto fixo mensal</span>
+        <div class="toggle-row">
+          <label class="toggle">
+            <input name="isInstallment" type="checkbox" [(ngModel)]="form.isInstallment" />
+            <span>Parcelado</span>
+          </label>
+
+          <label class="toggle" *ngIf="!form.isInstallment">
+            <input name="isFixed" type="checkbox" [(ngModel)]="form.isFixed" />
+            <span>Gasto fixo mensal</span>
+          </label>
+        </div>
+
+        <label *ngIf="form.isInstallment">
+          <span>Numero de parcelas</span>
+          <input name="totalInstallments" type="number" min="2" max="60" step="1" [(ngModel)]="form.totalInstallments" />
         </label>
+
+        <section class="preview" *ngIf="form.isInstallment && installmentPreview().length > 0">
+          <h3>Preview</h3>
+          <ol>
+            <li *ngFor="let item of installmentPreview()">
+              <span>{{ item.number }}/{{ form.totalInstallments }}</span>
+              <strong>{{ item.amount | currency:'BRL':'symbol':'1.2-2' }}</strong>
+              <small>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</small>
+            </li>
+          </ol>
+        </section>
 
         <p class="feedback error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
         <p class="feedback success" *ngIf="successMessage()">{{ successMessage() }}</p>
 
         <footer>
           <ui-button type="button" variant="secondary" (click)="close()">Cancelar</ui-button>
-          <ui-button type="submit" [disabled]="isSubmitting()">Salvar gasto</ui-button>
+          <ui-button type="submit" [disabled]="isSubmitting()">{{ form.isInstallment ? 'Salvar parcelas' : 'Salvar gasto' }}</ui-button>
         </footer>
       </form>
     </section>
@@ -142,7 +179,8 @@ interface ExpenseFormState {
 
     header,
     footer,
-    .field-grid {
+    .field-grid,
+    .toggle-row {
       display: flex;
       gap: 12px;
     }
@@ -200,7 +238,7 @@ interface ExpenseFormState {
       border-radius: 50%;
       background: #fff;
       cursor: pointer;
-      font-size: 22px;
+      font-size: 16px;
     }
 
     .toggle {
@@ -212,6 +250,45 @@ interface ExpenseFormState {
 
     .toggle input {
       width: auto;
+    }
+
+    .preview {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--color-hairline-soft);
+      border-radius: 10px;
+      padding: 12px;
+      background: var(--color-surface-strong);
+    }
+
+    .preview h3 {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .preview ol {
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+      list-style: none;
+    }
+
+    .preview li {
+      display: grid;
+      grid-template-columns: 64px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+
+    .preview span,
+    .preview strong {
+      font-family: var(--font-mono);
+    }
+
+    .preview small {
+      color: var(--color-muted);
     }
 
     .feedback {
@@ -229,8 +306,13 @@ interface ExpenseFormState {
       }
 
       .field-grid,
+      .toggle-row,
       footer {
         flex-direction: column;
+      }
+
+      .preview li {
+        grid-template-columns: 1fr;
       }
     }
   `]
@@ -264,13 +346,22 @@ export class NewExpenseFabComponent {
     this.isOpen.set(false);
   }
 
+  installmentPreview(): InstallmentPreviewItem[] {
+    return this.buildInstallmentPreview();
+  }
+
   submit(): void {
     this.errorMessage.set('');
     this.successMessage.set('');
 
     const amount = this.parseAmount(this.form.amount);
     if (!this.form.description.trim() || !Number.isFinite(amount) || amount <= 0 || !this.form.expenseDate) {
-      this.errorMessage.set('Preencha descrição, valor e data para salvar.');
+      this.errorMessage.set('Preencha descricao, valor e data para salvar.');
+      return;
+    }
+
+    if (this.form.isInstallment) {
+      this.submitInstallments(amount);
       return;
     }
 
@@ -289,7 +380,32 @@ export class NewExpenseFabComponent {
         this.successMessage.set('Gasto criado com sucesso.');
         this.form = this.initialForm();
       },
-      error: () => this.errorMessage.set('Não foi possível criar o gasto agora.')
+      error: () => this.errorMessage.set('Nao foi possivel criar o gasto agora.')
+    });
+  }
+
+  private submitInstallments(totalAmount: number): void {
+    const totalInstallments = Number(this.form.totalInstallments);
+    if (!Number.isInteger(totalInstallments) || totalInstallments < 2 || totalInstallments > 60) {
+      this.errorMessage.set('Informe entre 2 e 60 parcelas.');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.expensesFacade.createInstallments({
+      description: this.form.description.trim(),
+      totalAmount,
+      totalInstallments,
+      firstDueDate: this.form.expenseDate,
+      categoryId: this.form.categoryId || null,
+      familyMemberId: this.form.familyMemberId || null,
+      paymentMethod: this.trimToNull(this.form.paymentMethod)
+    }).pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+      next: (expenses) => {
+        this.successMessage.set(`${expenses.length} parcelas criadas com sucesso.`);
+        this.form = this.initialForm();
+      },
+      error: () => this.errorMessage.set('Nao foi possivel criar o parcelamento agora.')
     });
   }
 
@@ -312,8 +428,33 @@ export class NewExpenseFabComponent {
       familyMemberId: '',
       paymentMethod: '',
       notes: '',
-      isFixed: false
+      isFixed: false,
+      isInstallment: false,
+      totalInstallments: 2
     };
+  }
+
+  private buildInstallmentPreview(): InstallmentPreviewItem[] {
+    const totalAmount = this.parseAmount(this.form.amount);
+    const totalInstallments = Number(this.form.totalInstallments);
+    if (!this.form.isInstallment || !Number.isFinite(totalAmount) || totalAmount <= 0 || !Number.isInteger(totalInstallments) || totalInstallments < 2 || !this.form.expenseDate) {
+      return [];
+    }
+
+    const totalCents = Math.round(totalAmount * 100);
+    const baseCents = Math.floor(totalCents / totalInstallments);
+    const remainder = totalCents % totalInstallments;
+    const [year, month, day] = this.form.expenseDate.split('-').map(Number);
+
+    return Array.from({ length: totalInstallments }, (_, index) => {
+      const cents = baseCents + (index < remainder ? 1 : 0);
+      const date = new Date(year, month - 1 + index, day).toISOString().slice(0, 10);
+      return {
+        number: index + 1,
+        amount: cents / 100,
+        date
+      };
+    });
   }
 
   private parseAmount(value: string): number {
