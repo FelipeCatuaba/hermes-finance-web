@@ -1,11 +1,220 @@
-﻿.page-stack { display: grid; gap: 1rem; }
-.page-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
-.page-header h1 { margin: 0; font-family: var(--font-display); font-size: clamp(1.9rem, 5vw, 2.5rem); }
-.page-header p { margin: 0.4rem 0 0; color: var(--color-body); }
-.total-pill { border: 1px solid var(--color-hairline-soft); border-radius: 999px; padding: 0.55rem 0.9rem; font-family: var(--font-mono); }
-.panel h2 { margin: 0 0 0.8rem; font-size: 1rem; }
-ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
-li { display: flex; justify-content: space-between; gap: 0.8rem; border-bottom: 1px solid var(--color-hairline-soft); padding-bottom: 0.55rem; }
-li p { margin: 0.2rem 0 0; font-size: 0.75rem; color: var(--color-muted); }
-li span { color: #c0cfff; font-family: var(--font-mono); }
-@media (max-width: 960px) { .page-header { flex-direction: column; } }
+.page-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 5vw, 2.5rem);
+}
+
+.page-header p {
+  margin: 0.4rem 0 0;
+  color: var(--color-body);
+}
+
+.total-pill {
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.panel-heading span,
+.empty-state {
+  color: var(--color-muted);
+  font-size: 0.84rem;
+}
+
+.error {
+  color: var(--color-semantic-down);
+  font-size: 0.84rem;
+}
+
+.contract-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.contract {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 8px;
+  background: var(--color-surface-soft);
+}
+
+.contract-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, auto) 2rem;
+  gap: 0.8rem;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.contract-main {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.contract-main strong {
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-main span,
+.contract-metrics small,
+.schedule-header,
+.schedule time {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+}
+
+.contract-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, auto));
+  gap: 0.8rem;
+  justify-content: end;
+}
+
+.contract-metrics span {
+  display: grid;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.contract-metrics strong,
+.schedule strong,
+.schedule li > span {
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.contract-summary > i {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-muted);
+}
+
+.progress-track {
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(25, 34, 52, 0.08);
+}
+
+.progress-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #1ca784;
+}
+
+.schedule {
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 0.25rem;
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.schedule ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.schedule li {
+  display: grid;
+  grid-template-columns: 4rem minmax(6rem, 1fr) minmax(7rem, auto);
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--color-hairline-soft);
+}
+
+.schedule li strong {
+  text-align: right;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .total-pill {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .contract-summary {
+    grid-template-columns: minmax(0, 1fr) 2rem;
+  }
+
+  .contract-metrics {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: stretch;
+  }
+
+  .contract-metrics span {
+    text-align: left;
+  }
+
+  .schedule-header,
+  .schedule li {
+    align-items: flex-start;
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-header {
+    flex-direction: column;
+  }
+
+  .schedule li strong {
+    text-align: left;
+  }
+}

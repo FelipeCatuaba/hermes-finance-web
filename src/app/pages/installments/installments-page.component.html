@@ -1,22 +1,71 @@
-﻿<section class="page-stack">
+<section class="page-stack">
   <header class="page-header">
     <div>
       <h1>Parcelamentos</h1>
       <p>Visão das compras parceladas e impacto nos próximos meses.</p>
     </div>
-    <div class="total-pill">Compromisso: R$ 1.010,00/mês</div>
+    <div class="total-pill">Compromisso: {{ totalCommitted() | currency:'BRL':'symbol':'1.2-2' }}</div>
   </header>
 
+  <p *ngIf="error()" class="error">{{ error() }}</p>
+
   <ui-card class="panel">
-    <h2>Contratos ativos</h2>
-    <ul>
-      <li *ngFor="let item of contracts">
-        <div>
-          <strong>{{ item.title }}</strong>
-          <p>Parcela {{ item.progress }}</p>
+    <div class="panel-heading">
+      <h2>Contratos ativos</h2>
+      <span *ngIf="isLoading()">Carregando</span>
+    </div>
+
+    <p *ngIf="!isLoading() && groups().length === 0" class="empty-state">
+      Nenhum parcelamento em aberto.
+    </p>
+
+    <div class="contract-list" *ngIf="groups().length > 0">
+      <article class="contract" *ngFor="let group of groups(); trackBy: trackGroup">
+        <button
+          type="button"
+          class="contract-summary"
+          [attr.aria-expanded]="isExpanded(group.id)"
+          [attr.aria-controls]="'installment-schedule-' + group.id"
+          (click)="toggleGroup(group.id)"
+        >
+          <span class="contract-main">
+            <strong>{{ group.description }}</strong>
+            <span>Proxima parcela em {{ group.nextDueDate | date:'dd/MM/yyyy' }}</span>
+          </span>
+
+          <span class="contract-metrics">
+            <span>
+              <small>Pago</small>
+              <strong>{{ progressLabel(group) }}</strong>
+            </span>
+            <span>
+              <small>Aberto</small>
+              <strong>{{ group.futureTotal | currency:'BRL':'symbol':'1.2-2' }}</strong>
+            </span>
+          </span>
+
+          <i class="bi" [class.bi-chevron-down]="!isExpanded(group.id)" [class.bi-chevron-up]="isExpanded(group.id)" aria-hidden="true"></i>
+        </button>
+
+        <div class="progress-track" aria-hidden="true">
+          <i [style.width]="progressWidth(group)"></i>
         </div>
-        <span>{{ item.next }}</span>
-      </li>
-    </ul>
+
+        <div class="schedule" *ngIf="isExpanded(group.id)" [id]="'installment-schedule-' + group.id">
+          <div class="schedule-header">
+            <span>Valor total: {{ group.totalAmount | currency:'BRL':'symbol':'1.2-2' }}</span>
+            <span>{{ group.futureInstallments.length }} parcelas futuras</span>
+          </div>
+
+          <ul>
+            <li *ngFor="let installment of group.futureInstallments">
+              <span>{{ installment.installmentNumber }}/{{ group.totalInstallments }}</span>
+              <time>{{ installment.dueDate | date:'dd/MM/yyyy' }}</time>
+              <strong>{{ installment.amount | currency:'BRL':'symbol':'1.2-2' }}</strong>
+            </li>
+          </ul>
+        </div>
+      </article>
+    </div>
   </ui-card>
 </section>
