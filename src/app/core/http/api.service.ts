@@ -7,6 +7,7 @@ import { FamilyMember, FamilyMemberUpsertRequest } from '../models/family-member
 import { ExpenseCategory, ExpenseCategoryUpsertRequest } from '../models/expense-category.model';
 import { Expense, ExpenseBulkCreateRequest, ExpenseBulkCreateResponse, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams, ExpenseListResponse } from '../models/expense.model';
 import { Income, IncomeUpsertRequest } from '../models/income.model';
+import { Budget, BudgetStatusResponse, BudgetUpsertRequest } from '../models/budget.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -68,6 +69,30 @@ export class ApiService {
 
   deleteCategory(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/api/categories/${id}`);
+  }
+
+  getBudgetStatus(month: number, year: number): Observable<BudgetStatusResponse> {
+    return this.http.get<BudgetStatusResponse>(`${this.baseUrl}/api/budgets/status`, {
+      params: { month, year }
+    });
+  }
+
+  createBudget(payload: BudgetUpsertRequest): Observable<Budget> {
+    return this.http.post<Budget>(`${this.baseUrl}/api/budgets`, payload);
+  }
+
+  updateBudget(id: string, payload: BudgetUpsertRequest): Observable<Budget> {
+    return this.http.put<Budget>(`${this.baseUrl}/api/budgets/${id}`, payload);
+  }
+
+  deleteBudget(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/budgets/${id}`);
+  }
+
+  copyPreviousBudgets(month: number, year: number): Observable<Budget[]> {
+    return this.http.post<Budget[]>(`${this.baseUrl}/api/budgets/copy-previous`, null, {
+      params: { month, year }
+    });
   }
 
   getExpenses(params: ExpenseListParams): Observable<ExpenseListResponse> {

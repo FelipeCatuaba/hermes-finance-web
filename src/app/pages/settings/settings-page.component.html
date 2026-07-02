@@ -106,8 +106,59 @@
       </ui-card>
 
       <ui-card class="panel budget-panel">
-        <h2>Orçamento mensal</h2>
-        <p class="value">{{ snapshot.monthlyBudget }}</p>
+        <div class="card-head">
+          <div>
+            <h2>Orçamento mensal</h2>
+            <p class="period-copy">{{ monthService.label() }}</p>
+          </div>
+          <button type="button" class="ghost-btn" (click)="copyPreviousBudgets()" [disabled]="budgetLoading">
+            Copiar mês anterior
+          </button>
+        </div>
+
+        @if (budgetLoading) {
+          <p class="helper-copy">Carregando orçamentos...</p>
+        }
+
+        @if (!budgetLoading) {
+          <ul class="budget-list">
+            <li *ngFor="let row of budgetRows" [class.over-budget]="row.overBudget">
+              <div class="budget-row-main">
+                <span class="member-dot" [style.background]="row.category.colorHex || '#64748B'"></span>
+                <div>
+                  <strong>{{ getCategoryIcon(row.category.icon) }} {{ row.category.name }}</strong>
+                  <p>{{ row.spentAmount | currency:'BRL':'symbol':'1.2-2' }} gastos</p>
+                </div>
+              </div>
+
+              <div
+                class="budget-usage"
+                [class.ok]="budgetUsageClass(row) === 'ok'"
+                [class.warning]="budgetUsageClass(row) === 'warning'"
+                [class.danger]="budgetUsageClass(row) === 'danger'"
+              >
+                <span>{{ row.pctUsed === null ? 'Sem limite' : (row.pctUsed | number:'1.0-2') + '%' }}</span>
+                <div class="budget-meter">
+                  <span [style.width]="budgetProgressWidth(row)"></span>
+                </div>
+              </div>
+
+              <label class="budget-input">
+                <span>Limite</span>
+                <input type="number" min="0.01" step="0.01" [(ngModel)]="budgetDrafts[row.category.id]" />
+              </label>
+
+              <div class="member-actions">
+                <button type="button" class="solid-btn" (click)="saveBudget(row)">Salvar</button>
+                <button type="button" class="link-btn danger" (click)="clearBudget(row)" [disabled]="!row.budgetId">Remover</button>
+              </div>
+            </li>
+          </ul>
+        }
+
+        @if (budgetError) {
+          <p class="error-copy">{{ budgetError }}</p>
+        }
       </ui-card>
 
       <ui-card class="panel">
