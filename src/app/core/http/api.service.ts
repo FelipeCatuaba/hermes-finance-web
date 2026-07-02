@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { HealthStatus, MonthlyReport } from '../models/dashboard.model';
+import { HealthStatus, MonthlyReport, YearlyReport } from '../models/dashboard.model';
 import { FamilyMember, FamilyMemberUpsertRequest } from '../models/family-member.model';
 import { ExpenseCategory, ExpenseCategoryUpsertRequest } from '../models/expense-category.model';
 import { Expense, ExpenseBulkCreateRequest, ExpenseBulkCreateResponse, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams, ExpenseListResponse } from '../models/expense.model';
@@ -21,6 +21,12 @@ export class ApiService {
   getMonthlyReport(month: number, year: number): Observable<MonthlyReport> {
     return this.http.get<MonthlyReport>(`${this.baseUrl}/api/reports/monthly`, {
       params: { month, year }
+    });
+  }
+
+  getYearlyReport(year: number): Observable<YearlyReport> {
+    return this.http.get<YearlyReport>(`${this.baseUrl}/api/reports/yearly`, {
+      params: { year }
     });
   }
 

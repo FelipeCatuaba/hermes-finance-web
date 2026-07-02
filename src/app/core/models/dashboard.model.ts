@@ -28,6 +28,19 @@ export interface MonthlyReport {
   };
 }
 
+export interface YearlyReport {
+  year: number;
+  months: YearlyReportMonth[];
+}
+
+export interface YearlyReportMonth {
+  month: number;
+  incomeTotal: number;
+  ownerExpensesTotal: number;
+  familyExpensesTotal: number;
+  savingsRate: number | null;
+}
+
 export interface MonthlyIncomeItem {
   id: string;
   description: string;
