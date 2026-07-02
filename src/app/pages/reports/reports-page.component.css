@@ -1,14 +1,293 @@
-﻿.page-stack { display: grid; gap: 1rem; }
-.page-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
-.page-header h1 { margin: 0; font-family: var(--font-display); font-size: clamp(1.9rem, 5vw, 2.5rem); }
-.page-header p { margin: 0.4rem 0 0; color: var(--color-body); }
-.total-pill { border: 1px solid var(--color-hairline-soft); border-radius: 999px; padding: 0.55rem 0.9rem; font-family: var(--font-mono); }
-.grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 0.8rem; }
-.panel h2 { margin: 0 0 0.8rem; font-size: 1rem; }
-.bars { display: flex; align-items: flex-end; gap: 0.6rem; height: 160px; }
-.bars div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.35rem; }
-.bars i { width: 100%; background: linear-gradient(180deg,#5b82ff,#3461f5); border-radius: 6px 6px 0 0; }
-.bars span { font-size: 0.68rem; color: var(--color-muted); }
-.summary-row { display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid var(--color-hairline-soft); color: var(--color-body); }
-.summary-row strong { color: var(--color-ink); font-family: var(--font-mono); }
-@media (max-width: 960px) { .grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; } }
+.page-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 5vw, 2.5rem);
+}
+
+.page-header p {
+  margin: 0.4rem 0 0;
+  color: var(--color-body);
+}
+
+.year-control {
+  display: grid;
+  grid-template-columns: 2.4rem 5.4rem 2.4rem;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.year-control button,
+.year-control input {
+  height: 2.4rem;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 8px;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+.year-control button {
+  cursor: pointer;
+}
+
+.year-control button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.year-control input {
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.panel-heading span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.error {
+  color: var(--color-semantic-down);
+  font-size: 0.82rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  margin-bottom: 0.9rem;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+}
+
+.legend span {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.legend i {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 999px;
+}
+
+.legend .income,
+.series-line.income .track i {
+  background: #1ca784;
+}
+
+.legend .owner,
+.series-line.owner .track i {
+  background: #d84b6b;
+}
+
+.legend .family,
+.series-line.family .track i {
+  background: #c88721;
+}
+
+.legend .saving {
+  background: #4d67d8;
+}
+
+.month-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.month-row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 7.4rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 8px;
+  background: var(--color-surface-soft);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.month-row:hover {
+  border-color: var(--color-hairline);
+  background: var(--color-canvas);
+}
+
+.month-row:disabled {
+  cursor: default;
+  opacity: 0.64;
+}
+
+.month-row:disabled:hover {
+  border-color: var(--color-hairline-soft);
+  background: var(--color-surface-soft);
+}
+
+.month-name {
+  align-self: center;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.series {
+  display: grid;
+  gap: 0.36rem;
+  min-width: 0;
+}
+
+.series-line {
+  display: grid;
+  grid-template-columns: 4.1rem minmax(4rem, 1fr) minmax(6.2rem, auto);
+  gap: 0.5rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.series-label {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.track {
+  display: block;
+  height: 0.58rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(25, 34, 52, 0.08);
+}
+
+.track i {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+}
+
+.series-line strong,
+.summary-row strong,
+.saving-line strong {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.series-line strong {
+  color: var(--color-ink);
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.saving-line {
+  display: grid;
+  grid-template-columns: 4.1rem minmax(4rem, 1fr) minmax(6.2rem, auto);
+  gap: 0.5rem;
+  align-items: center;
+  color: #4d67d8;
+  font-size: 0.72rem;
+}
+
+.saving-label {
+  color: var(--color-muted);
+}
+
+.saving-track {
+  position: relative;
+  display: block;
+  height: 1px;
+  background: rgba(77, 103, 216, 0.3);
+}
+
+.saving-line i {
+  position: absolute;
+  top: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: #4d67d8;
+  transform: translate(-50%, -50%);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--color-hairline-soft);
+  color: var(--color-body);
+}
+
+.summary-row strong {
+  color: var(--color-ink);
+  text-align: right;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 430px) {
+  .month-row {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .month-name {
+    align-self: start;
+  }
+
+  .series-line,
+  .saving-line {
+    grid-template-columns: 3.6rem minmax(3.5rem, 1fr) minmax(5.7rem, auto);
+  }
+
+  .saving-line i {
+    width: 0.4rem;
+    height: 0.4rem;
+  }
+
+  .summary-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -16,4 +16,8 @@ export class DashboardFacade {
   getMonthlyReport(month: number, year: number) {
     return this.api.getMonthlyReport(month, year);
   }
+
+  getYearlyReport(year: number) {
+    return this.api.getYearlyReport(year);
+  }
 }
