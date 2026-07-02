@@ -1,12 +1,12 @@
 ﻿import { Component } from '@angular/core';
-import { AsyncPipe, CurrencyPipe, DatePipe, NgFor } from '@angular/common';
+import { AsyncPipe, CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
 import { ExpensesFacade } from '../../core/facades/expenses.facade';
 
 @Component({
   selector: 'app-expenses-page',
   standalone: true,
-  imports: [AsyncPipe, CurrencyPipe, DatePipe, NgFor, UiCardComponent],
+  imports: [AsyncPipe, CurrencyPipe, DatePipe, NgFor, NgIf, UiCardComponent],
   templateUrl: './expenses-page.component.html',
   styleUrl: './expenses-page.component.css'
 })

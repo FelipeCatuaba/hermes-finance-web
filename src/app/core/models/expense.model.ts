@@ -5,6 +5,9 @@ export interface Expense {
   expenseDate: string;
   categoryId: string | null;
   familyMemberId: string | null;
+  installmentGroupId: string | null;
+  installmentNumber: number | null;
+  totalInstallments: number | null;
   paymentMethod: string | null;
   notes: string | null;
   fixed: boolean;
@@ -22,4 +25,14 @@ export interface ExpenseCreateRequest {
   paymentMethod?: string | null;
   notes?: string | null;
   isFixed?: boolean;
+}
+
+export interface ExpenseInstallmentCreateRequest {
+  description: string;
+  totalAmount: number;
+  totalInstallments: number;
+  firstDueDate: string;
+  categoryId?: string | null;
+  familyMemberId?: string | null;
+  paymentMethod?: string | null;
 }

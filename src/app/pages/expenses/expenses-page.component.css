@@ -9,6 +9,8 @@ ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
 li { display: flex; justify-content: space-between; gap: 0.8rem; border-bottom: 1px solid var(--color-hairline-soft); padding-bottom: 0.55rem; }
 li p { margin: 0.2rem 0 0; font-size: 0.75rem; color: var(--color-muted); }
 li span { color: var(--color-semantic-down); font-family: var(--font-mono); }
+.expense-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+.installment-badge { border: 1px solid var(--color-hairline-soft); border-radius: 999px; padding: 0.18rem 0.45rem; color: var(--color-ink); font-size: 0.72rem; }
 .bar-row { display: grid; gap: 0.3rem; margin-bottom: 0.6rem; font-size: 0.8rem; color: var(--color-body); }
 .bar { height: 8px; border-radius: 999px; background: var(--color-surface-dark); overflow: hidden; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, #5b82ff, #38d9f5); }

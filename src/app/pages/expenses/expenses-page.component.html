@@ -16,7 +16,12 @@
             <strong>{{ expense.description }}</strong>
             <p>{{ expense.scope === 'family' ? 'Família' : 'Meu' }} · {{ expense.expenseDate | date:'dd/MM/yyyy':'UTC' }}</p>
           </div>
-          <span>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
+          <div class="expense-meta">
+            <span class="installment-badge" *ngIf="expense.installmentNumber && expense.totalInstallments">
+              {{ expense.installmentNumber }}/{{ expense.totalInstallments }}
+            </span>
+            <span>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
+          </div>
         </li>
 
         <li *ngFor="let item of items">
