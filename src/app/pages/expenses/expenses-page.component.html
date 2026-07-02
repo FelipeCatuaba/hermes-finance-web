@@ -1,26 +1,34 @@
-﻿<section class="page-stack">
+<section class="page-stack">
   <header class="page-header">
     <div>
       <h1>Gastos</h1>
-      <p>Controle por categoria com foco em redução e previsibilidade.</p>
+      <p>Controle por categoria com foco em reducao e previsibilidade.</p>
     </div>
     <div class="total-pill">Total: R$ 2.497,10</div>
   </header>
 
+  <p class="feedback error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+  <p class="feedback success" *ngIf="successMessage()">{{ successMessage() }}</p>
+
   <div class="grid">
     <ui-card class="panel">
-      <h2>Lançamentos recentes</h2>
+      <h2>Lancamentos recentes</h2>
       <ul>
         <li *ngFor="let expense of createdExpenses$ | async">
           <div>
             <strong>{{ expense.description }}</strong>
-            <p>{{ expense.scope === 'family' ? 'Família' : 'Meu' }} · {{ expense.expenseDate | date:'dd/MM/yyyy':'UTC' }}</p>
+            <p>{{ expense.scope === 'family' ? 'Familia' : 'Meu' }} - {{ expense.expenseDate | date:'dd/MM/yyyy':'UTC' }}</p>
           </div>
           <div class="expense-meta">
             <span class="installment-badge" *ngIf="expense.installmentNumber && expense.totalInstallments">
               {{ expense.installmentNumber }}/{{ expense.totalInstallments }}
             </span>
             <span>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
+            <div class="item-actions">
+              <button type="button" (click)="openEdit(expense)">Editar</button>
+              <button type="button" (click)="deleteExpense(expense)">Excluir esta</button>
+              <button type="button" *ngIf="expense.installmentGroupId" (click)="deleteInstallmentGroup(expense)">Excluir todas</button>
+            </div>
           </div>
         </li>
 
@@ -35,11 +43,78 @@
     </ui-card>
 
     <ui-card class="panel">
-      <h2>Distribuição por categoria</h2>
+      <h2>Distribuicao por categoria</h2>
       <div class="bar-row"><span>Moradia</span><div class="bar"><i style="width: 60%"></i></div></div>
-      <div class="bar-row"><span>Alimentação</span><div class="bar"><i style="width: 40%"></i></div></div>
+      <div class="bar-row"><span>Alimentacao</span><div class="bar"><i style="width: 40%"></i></div></div>
       <div class="bar-row"><span>Transporte</span><div class="bar"><i style="width: 26%"></i></div></div>
-      <div class="bar-row"><span>Saúde</span><div class="bar"><i style="width: 15%"></i></div></div>
+      <div class="bar-row"><span>Saude</span><div class="bar"><i style="width: 15%"></i></div></div>
     </ui-card>
   </div>
+
+  <section class="sheet-backdrop" *ngIf="editingExpense()" (click)="closeEdit()">
+    <form class="sheet" (click)="$event.stopPropagation()" (ngSubmit)="submitEdit()">
+      <header>
+        <div>
+          <p>Editar gasto</p>
+          <h2>{{ editingExpense()?.installmentGroupId ? 'Editar parcela' : 'Editar lancamento' }}</h2>
+        </div>
+        <button type="button" class="icon-button" aria-label="Fechar" (click)="closeEdit()">x</button>
+      </header>
+
+      <label>
+        <span>Descricao</span>
+        <input name="description" required maxlength="255" [(ngModel)]="form.description" />
+      </label>
+
+      <div class="field-grid">
+        <label>
+          <span>Valor</span>
+          <input name="amount" required inputmode="decimal" placeholder="0,00" [(ngModel)]="form.amount" />
+        </label>
+
+        <label>
+          <span>Data</span>
+          <input name="expenseDate" required type="date" [max]="today" [(ngModel)]="form.expenseDate" />
+        </label>
+      </div>
+
+      <div class="field-grid">
+        <label>
+          <span>Categoria</span>
+          <select name="categoryId" [(ngModel)]="form.categoryId">
+            <option value="">Sem categoria</option>
+            <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>De quem e</span>
+          <select name="familyMemberId" [(ngModel)]="form.familyMemberId">
+            <option value="">Meu</option>
+            <option *ngFor="let member of familyMembers()" [value]="member.id">{{ member.name }}</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        <span>Forma de pagamento</span>
+        <input name="paymentMethod" maxlength="50" placeholder="Pix, credito, debito..." [(ngModel)]="form.paymentMethod" />
+      </label>
+
+      <label>
+        <span>Observacoes</span>
+        <textarea name="notes" rows="3" [(ngModel)]="form.notes"></textarea>
+      </label>
+
+      <label class="toggle">
+        <input name="isFixed" type="checkbox" [(ngModel)]="form.isFixed" />
+        <span>Gasto fixo mensal</span>
+      </label>
+
+      <footer>
+        <ui-button type="button" variant="secondary" (click)="closeEdit()">Cancelar</ui-button>
+        <ui-button type="submit" [disabled]="isSubmitting()">Salvar alteracoes</ui-button>
+      </footer>
+    </form>
+  </section>
 </section>
