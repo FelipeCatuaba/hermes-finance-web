@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { HealthStatus } from '../models/dashboard.model';
 import { FamilyMember, FamilyMemberUpsertRequest } from '../models/family-member.model';
 import { ExpenseCategory, ExpenseCategoryUpsertRequest } from '../models/expense-category.model';
-import { Expense, ExpenseCreateRequest, ExpenseInstallmentCreateRequest } from '../models/expense.model';
+import { Expense, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams, ExpenseListResponse } from '../models/expense.model';
 import { Income, IncomeUpsertRequest } from '../models/income.model';
 
 @Injectable({ providedIn: 'root' })
@@ -52,6 +52,24 @@ export class ApiService {
 
   deleteCategory(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/api/categories/${id}`);
+  }
+
+  getExpenses(params: ExpenseListParams): Observable<ExpenseListResponse> {
+    const requestParams: Record<string, string | number> = {
+      month: params.month,
+      year: params.year,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    };
+
+    if (params.categoryId) {
+      requestParams['categoryId'] = params.categoryId;
+    }
+    if (params.memberId) {
+      requestParams['memberId'] = params.memberId;
+    }
+
+    return this.http.get<ExpenseListResponse>(`${this.baseUrl}/api/expenses`, { params: requestParams });
   }
 
   createExpense(payload: ExpenseCreateRequest): Observable<Expense> {

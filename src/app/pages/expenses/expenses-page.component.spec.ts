@@ -1,22 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ExpensesPageComponent } from './expenses-page.component';
 import { CategoriesFacade } from '../../core/facades/categories.facade';
 import { ExpensesFacade } from '../../core/facades/expenses.facade';
 import { FamilyMembersFacade } from '../../core/facades/family-members.facade';
-import { Expense } from '../../core/models/expense.model';
+import { ExpenseListItem, ExpenseListResponse } from '../../core/models/expense.model';
+import { MonthService } from '../../core/services/month.service';
 
 describe('ExpensesPageComponent', () => {
   let fixture: ComponentFixture<ExpensesPageComponent>;
   let expensesFacade: jasmine.SpyObj<ExpensesFacade>;
+  let refresh$: Subject<void>;
 
-  const expense: Expense = {
+  const expense: ExpenseListItem = {
     id: 'expense-1',
     description: 'Mercado',
     amount: 120.5,
     expenseDate: '2026-03-10',
-    categoryId: 'category-1',
-    familyMemberId: 'member-1',
+    category: { id: 'category-1', name: 'Mercado', icon: 'cart', colorHex: '#5b82ff' },
+    familyMember: { id: 'member-1', name: 'Isa', relation: null },
     installmentGroupId: 'group-1',
     installmentNumber: 2,
     totalInstallments: 12,
@@ -28,12 +30,38 @@ describe('ExpensesPageComponent', () => {
     updatedAt: '2026-03-10T00:00:00Z'
   };
 
+  const listResponse: ExpenseListResponse = {
+    items: [expense],
+    totalAmount: 120.5,
+    total: 1,
+    page: 0,
+    size: 20,
+    totalPages: 1
+  };
+
   beforeEach(async () => {
-    const createdExpenses$ = new BehaviorSubject<Expense[]>([expense]);
-    expensesFacade = jasmine.createSpyObj<ExpensesFacade>('ExpensesFacade', ['update', 'delete', 'deleteInstallmentGroup'], {
-      createdExpenses$: createdExpenses$.asObservable()
+    refresh$ = new Subject<void>();
+    expensesFacade = jasmine.createSpyObj<ExpensesFacade>('ExpensesFacade', ['list', 'update', 'delete', 'deleteInstallmentGroup'], {
+      refresh$: refresh$.asObservable()
     });
-    expensesFacade.update.and.returnValue(of({ ...expense, familyMemberId: null, scope: 'owner' }));
+    expensesFacade.list.and.returnValue(of(listResponse));
+    expensesFacade.update.and.returnValue(of({
+      id: 'expense-1',
+      description: 'Mercado',
+      amount: 120.5,
+      expenseDate: '2026-03-10',
+      categoryId: null,
+      familyMemberId: null,
+      installmentGroupId: 'group-1',
+      installmentNumber: 2,
+      totalInstallments: 12,
+      paymentMethod: 'card',
+      notes: 'nota',
+      fixed: true,
+      scope: 'owner',
+      createdAt: '2026-03-10T00:00:00Z',
+      updatedAt: '2026-03-10T00:00:00Z'
+    }));
     expensesFacade.delete.and.returnValue(of(undefined));
     expensesFacade.deleteInstallmentGroup.and.returnValue(of(undefined));
 
@@ -52,12 +80,50 @@ describe('ExpensesPageComponent', () => {
             list: () => of([{ id: 'member-1', name: 'Isa', relation: null, active: true, createdAt: '' }])
           }
         },
-        { provide: ExpensesFacade, useValue: expensesFacade }
+        { provide: ExpensesFacade, useValue: expensesFacade },
+        {
+          provide: MonthService,
+          useValue: {
+            period: () => ({ month: 3, year: 2026 }),
+            period$: of({ month: 3, year: 2026 }),
+            label: () => 'Marco de 2026'
+          }
+        }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ExpensesPageComponent);
     fixture.detectChanges();
+  });
+
+  it('loads expenses for the selected month', () => {
+    expect(expensesFacade.list).toHaveBeenCalledWith({
+      month: 3,
+      year: 2026,
+      categoryId: null,
+      memberId: null,
+      page: 0,
+      size: 20
+    });
+    expect(fixture.componentInstance.expenses()).toEqual([expense]);
+    expect(fixture.componentInstance.totalAmount()).toBe(120.5);
+  });
+
+  it('applies combined filters to the same month', () => {
+    const component = fixture.componentInstance;
+    component.selectedCategoryId = 'category-1';
+    component.selectedMemberId = 'member-1';
+
+    component.applyFilters();
+
+    expect(expensesFacade.list).toHaveBeenCalledWith({
+      month: 3,
+      year: 2026,
+      categoryId: 'category-1',
+      memberId: 'member-1',
+      page: 0,
+      size: 20
+    });
   });
 
   it('prefills edit modal and submits update payload', () => {

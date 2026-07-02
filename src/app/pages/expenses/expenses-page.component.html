@@ -4,51 +4,104 @@
       <h1>Gastos</h1>
       <p>Controle por categoria com foco em reducao e previsibilidade.</p>
     </div>
-    <div class="total-pill">Total: R$ 2.497,10</div>
+    <div class="total-pill">
+      <span>Total do mes</span>
+      <strong>{{ totalAmount() | currency:'BRL':'symbol':'1.2-2' }}</strong>
+    </div>
   </header>
 
   <p class="feedback error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
   <p class="feedback success" *ngIf="successMessage()">{{ successMessage() }}</p>
 
   <div class="grid">
-    <ui-card class="panel">
-      <h2>Lancamentos recentes</h2>
-      <ul>
-        <li *ngFor="let expense of createdExpenses$ | async">
+    <section class="list-section">
+      <ui-card class="panel">
+        <div class="panel-header">
           <div>
-            <strong>{{ expense.description }}</strong>
-            <p>{{ expense.scope === 'family' ? 'Familia' : 'Meu' }} - {{ expense.expenseDate | date:'dd/MM/yyyy':'UTC' }}</p>
+            <h2>Lancamentos</h2>
+            <p>{{ total() }} item(ns) em {{ monthService.label() }}</p>
           </div>
-          <div class="expense-meta">
-            <span class="installment-badge" *ngIf="expense.installmentNumber && expense.totalInstallments">
-              {{ expense.installmentNumber }}/{{ expense.totalInstallments }}
-            </span>
-            <span>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
-            <div class="item-actions">
-              <button type="button" (click)="openEdit(expense)">Editar</button>
-              <button type="button" (click)="deleteExpense(expense)">Excluir esta</button>
-              <button type="button" *ngIf="expense.installmentGroupId" (click)="deleteInstallmentGroup(expense)">Excluir todas</button>
-            </div>
-          </div>
-        </li>
+          <span class="loading-pill" *ngIf="isLoading()">Carregando</span>
+        </div>
 
-        <li *ngFor="let item of items">
-          <div>
-            <strong>{{ item.name }}</strong>
-            <p>{{ item.category }}</p>
-          </div>
-          <span>{{ item.amount }}</span>
-        </li>
-      </ul>
-    </ui-card>
+        <div class="empty-state" *ngIf="hasLoaded() && !isLoading() && expenses().length === 0">
+          <strong>Nenhum gasto encontrado</strong>
+          <p>Ajuste os filtros ou adicione um novo lancamento neste mes.</p>
+        </div>
 
-    <ui-card class="panel">
-      <h2>Distribuicao por categoria</h2>
-      <div class="bar-row"><span>Moradia</span><div class="bar"><i style="width: 60%"></i></div></div>
-      <div class="bar-row"><span>Alimentacao</span><div class="bar"><i style="width: 40%"></i></div></div>
-      <div class="bar-row"><span>Transporte</span><div class="bar"><i style="width: 26%"></i></div></div>
-      <div class="bar-row"><span>Saude</span><div class="bar"><i style="width: 15%"></i></div></div>
-    </ui-card>
+        <div class="expense-groups" *ngIf="expenses().length > 0">
+          <section class="expense-group" *ngFor="let group of expenseGroups()">
+            <h3>{{ group.date | date:'EEEE, dd/MM':'UTC' }}</h3>
+            <ul>
+              <li *ngFor="let expense of group.items">
+                <div class="expense-main">
+                  <span class="category-dot">{{ categoryIcon(expense) }}</span>
+                  <div>
+                    <strong>{{ expense.description }}</strong>
+                    <p>
+                      {{ categoryLabel(expense) }}
+                      <span class="separator">/</span>
+                      {{ paymentLabel(expense) }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="expense-meta">
+                  <span class="member-badge">{{ memberLabel(expense) }}</span>
+                  <span class="installment-badge" *ngIf="expense.installmentNumber && expense.totalInstallments">
+                    {{ expense.installmentNumber }}/{{ expense.totalInstallments }}
+                  </span>
+                  <strong>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</strong>
+                  <div class="item-actions">
+                    <button type="button" (click)="openEdit(expense)">Editar</button>
+                    <button type="button" (click)="deleteExpense(expense)">Excluir esta</button>
+                    <button type="button" *ngIf="expense.installmentGroupId" (click)="deleteInstallmentGroup(expense)">Excluir todas</button>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <footer class="pagination" *ngIf="totalPages() > 1">
+          <button type="button" (click)="prevPage()" [disabled]="page() === 0">Anterior</button>
+          <span>Pagina {{ page() + 1 }} de {{ totalPages() }}</span>
+          <button type="button" (click)="nextPage()" [disabled]="page() + 1 >= totalPages()">Proxima</button>
+        </footer>
+      </ui-card>
+    </section>
+
+    <aside class="filters">
+      <ui-card class="panel">
+        <h2>Filtros</h2>
+
+        <label>
+          <span>Categoria</span>
+          <select name="filterCategory" [(ngModel)]="selectedCategoryId" (ngModelChange)="applyFilters()">
+            <option value="">Todas</option>
+            <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Membro</span>
+          <select name="filterMember" [(ngModel)]="selectedMemberId" (ngModelChange)="applyFilters()">
+            <option value="">Todos</option>
+            <option *ngFor="let member of familyMembers()" [value]="member.id">{{ member.name }}</option>
+          </select>
+        </label>
+
+        <div class="filter-chips">
+          <button type="button" [class.active]="!selectedCategoryId && !selectedMemberId" (click)="clearFilters()">Todos</button>
+          <button type="button" *ngFor="let category of categories()" [class.active]="selectedCategoryId === category.id" (click)="selectedCategoryId = category.id; applyFilters()">
+            {{ category.name }}
+          </button>
+          <button type="button" *ngFor="let member of familyMembers()" [class.active]="selectedMemberId === member.id" (click)="selectedMemberId = member.id; applyFilters()">
+            {{ member.name }}
+          </button>
+        </div>
+      </ui-card>
+    </aside>
   </div>
 
   <section class="sheet-backdrop" *ngIf="editingExpense()" (click)="closeEdit()">
