@@ -11,7 +11,8 @@ describe('DashboardFacade', () => {
         {
           provide: ApiService,
           useValue: {
-            getHealth: () => throwError(() => new Error('offline'))
+            getHealth: () => throwError(() => new Error('offline')),
+            getIncomes: () => of([])
           }
         }
       ]
@@ -32,7 +33,20 @@ describe('DashboardFacade', () => {
         {
           provide: ApiService,
           useValue: {
-            getHealth: () => of({ status: 'ok' })
+            getHealth: () => of({ status: 'ok' }),
+            getIncomes: () => of([
+              {
+                id: 'income-1',
+                description: 'Salario',
+                amount: 8000,
+                incomeDate: '2026-05-01',
+                categoryId: null,
+                recurring: true,
+                notes: null,
+                createdAt: '2026-05-01T00:00:00Z',
+                updatedAt: '2026-05-01T00:00:00Z'
+              }
+            ])
           }
         }
       ]
@@ -44,6 +58,7 @@ describe('DashboardFacade', () => {
       expect(snapshot.month).toBe(5);
       expect(snapshot.year).toBe(2026);
       expect(snapshot.kpis.length).toBeGreaterThan(0);
+      expect(snapshot.kpis.some((kpi) => kpi.label === 'Receitas' && kpi.value.includes('8.000'))).toBeTrue();
       done();
     });
   });

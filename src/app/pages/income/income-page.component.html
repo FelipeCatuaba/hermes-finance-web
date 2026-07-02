@@ -1,31 +1,101 @@
-﻿<section class="page-stack">
+<section class="page-stack">
   <header class="page-header">
     <div>
       <h1>Receitas</h1>
-      <p>Entradas do mês com visão consolidada e histórico recente.</p>
+      <p>Entradas de {{ selectedMonthLabel() }} com controle por competencia.</p>
     </div>
-    <div class="total-pill">Total: R$ 8.770,00</div>
+    <div class="header-actions">
+      <div class="total-pill">Total: {{ total() | currency:'BRL':'symbol':'1.2-2' }}</div>
+      <ui-button type="button" (click)="openCreate()">Nova receita</ui-button>
+    </div>
   </header>
+
+  <p class="feedback error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+  <p class="feedback success" *ngIf="successMessage()">{{ successMessage() }}</p>
 
   <div class="grid">
     <ui-card class="panel">
-      <h2>Entradas do mês</h2>
-      <ul>
-        <li *ngFor="let item of entries">
+      <h2>Entradas do mes</h2>
+      <p class="empty-state" *ngIf="isLoading()">Carregando receitas...</p>
+      <p class="empty-state" *ngIf="!isLoading() && incomes().length === 0">Nenhuma receita neste mes.</p>
+      <ul *ngIf="!isLoading() && incomes().length > 0">
+        <li *ngFor="let income of incomes()">
           <div>
-            <strong>{{ item.name }}</strong>
-            <p>{{ item.date }} · {{ item.tag }}</p>
+            <strong>{{ income.description }}</strong>
+            <p>
+              {{ income.incomeDate | date:'dd/MM/yyyy':'UTC' }}
+              - {{ categoryName(income.categoryId) }}
+              - {{ income.recurring ? 'recorrente' : 'pontual' }}
+            </p>
           </div>
-          <span>{{ item.amount }}</span>
+          <div class="item-actions">
+            <span>{{ income.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
+            <button type="button" aria-label="Editar receita" (click)="openEdit(income)">Editar</button>
+            <button type="button" aria-label="Remover receita" (click)="remove(income)">Remover</button>
+          </div>
         </li>
       </ul>
     </ui-card>
 
     <ui-card class="panel">
       <h2>Resumo</h2>
-      <div class="summary-row"><span>Receita principal</span><strong>R$ 8.000,00</strong></div>
-      <div class="summary-row"><span>Entradas extras</span><strong>R$ 770,00</strong></div>
-      <div class="summary-row"><span>Média diária</span><strong>R$ 292,33</strong></div>
+      <div class="summary-row"><span>Total do mes</span><strong>{{ total() | currency:'BRL':'symbol':'1.2-2' }}</strong></div>
+      <div class="summary-row"><span>Receitas recorrentes</span><strong>{{ recurringTotal() | currency:'BRL':'symbol':'1.2-2' }}</strong></div>
+      <div class="summary-row"><span>Entradas pontuais</span><strong>{{ oneTimeTotal() | currency:'BRL':'symbol':'1.2-2' }}</strong></div>
     </ui-card>
   </div>
+
+  <section class="sheet-backdrop" *ngIf="isModalOpen()" (click)="closeModal()">
+    <form class="sheet" (click)="$event.stopPropagation()" (ngSubmit)="submit()">
+      <header>
+        <div>
+          <p>{{ editingIncome() ? 'Editar receita' : 'Nova receita' }}</p>
+          <h2>{{ editingIncome() ? 'Atualizar entrada' : 'Registrar entrada' }}</h2>
+        </div>
+        <button type="button" class="icon-button" aria-label="Fechar" (click)="closeModal()">x</button>
+      </header>
+
+      <label>
+        <span>Descricao</span>
+        <input name="description" required maxlength="255" [(ngModel)]="form.description" />
+      </label>
+
+      <div class="field-grid">
+        <label>
+          <span>Valor</span>
+          <input name="amount" required inputmode="decimal" placeholder="0,00" [(ngModel)]="form.amount" />
+        </label>
+
+        <label>
+          <span>Data</span>
+          <input name="incomeDate" required type="date" [max]="today" [(ngModel)]="form.incomeDate" />
+        </label>
+      </div>
+
+      <label>
+        <span>Categoria</span>
+        <select name="categoryId" [(ngModel)]="form.categoryId">
+          <option value="">Sem categoria</option>
+          <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+        </select>
+      </label>
+
+      <label class="toggle">
+        <input name="isRecurring" type="checkbox" [(ngModel)]="form.isRecurring" />
+        <span>Receita recorrente</span>
+      </label>
+
+      <label>
+        <span>Observacoes</span>
+        <textarea name="notes" rows="3" [(ngModel)]="form.notes"></textarea>
+      </label>
+
+      <p class="feedback error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+      <footer>
+        <ui-button type="button" variant="secondary" (click)="closeModal()">Cancelar</ui-button>
+        <ui-button type="submit" [disabled]="isSubmitting()">{{ editingIncome() ? 'Salvar alteracoes' : 'Salvar receita' }}</ui-button>
+      </footer>
+    </form>
+  </section>
 </section>
