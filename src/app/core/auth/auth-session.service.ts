@@ -14,6 +14,15 @@ export interface AuthActionResult {
   message?: string;
 }
 
+export type AuthProfileSection = 'profile' | 'email' | 'password' | 'sessions';
+
+export interface AuthAccountSummary {
+  userId: string;
+  name: string;
+  email: string;
+  passwordEnabled: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
   private clerk: Clerk | null = null;
@@ -24,6 +33,10 @@ export class AuthSessionService {
   });
 
   readonly state = this.stateSignal.asReadonly();
+
+  isConfigured(): boolean {
+    return Boolean(environment.clerkPublishableKey);
+  }
 
   async init(): Promise<void> {
     const key = environment.clerkPublishableKey;
@@ -73,6 +86,52 @@ export class AuthSessionService {
       await this.clerk.signOut();
     }
     this.syncState();
+  }
+
+  getAccountSummary(): AuthAccountSummary | null {
+    const user = this.clerk?.user;
+    if (!user) {
+      return null;
+    }
+
+    return {
+      userId: user.id,
+      name: user.fullName || user.firstName || 'Conta HERMES',
+      email: user.primaryEmailAddress?.emailAddress ?? 'Email nao informado',
+      passwordEnabled: user.passwordEnabled
+    };
+  }
+
+  async refreshAccountSummary(): Promise<AuthAccountSummary | null> {
+    await this.init();
+    const user = this.clerk?.user;
+    if (user) {
+      await (user as any).reload?.();
+    }
+    this.syncState();
+    return this.getAccountSummary();
+  }
+
+  async openUserProfile(section: AuthProfileSection = 'profile'): Promise<AuthActionResult> {
+    await this.init();
+    if (!this.clerk) {
+      return { ok: false, message: 'Clerk nao esta configurado neste ambiente.' };
+    }
+    if (!this.clerk.session || !this.clerk.user) {
+      return { ok: false, message: 'Entre novamente para gerenciar sua conta.' };
+    }
+
+    const startPathBySection: Record<AuthProfileSection, string> = {
+      profile: '/account',
+      email: '/account/email-addresses',
+      password: '/security',
+      sessions: '/security/active-devices'
+    };
+    this.clerk.openUserProfile({
+      __experimental_startPath: startPathBySection[section]
+    } as any);
+    this.syncState();
+    return { ok: true };
   }
 
   async signInWithPassword(email: string, password: string): Promise<AuthActionResult> {
