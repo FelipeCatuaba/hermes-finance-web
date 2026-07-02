@@ -1,13 +1,15 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { AsyncPipe, CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of } from 'rxjs';
 import { CategoriesFacade } from '../../core/facades/categories.facade';
 import { ExpensesFacade } from '../../core/facades/expenses.facade';
 import { FamilyMembersFacade } from '../../core/facades/family-members.facade';
 import { ExpenseCategory } from '../../core/models/expense-category.model';
-import { Expense, ExpenseCreateRequest } from '../../core/models/expense.model';
+import { ExpenseCreateRequest, ExpenseListItem } from '../../core/models/expense.model';
 import { FamilyMember } from '../../core/models/family-member.model';
+import { MonthService } from '../../core/services/month.service';
 import { UiButtonComponent } from '../../shared/ui/button/ui-button.component';
 import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
 
@@ -22,48 +24,91 @@ interface ExpenseEditForm {
   isFixed: boolean;
 }
 
+interface ExpenseGroup {
+  date: string;
+  items: ExpenseListItem[];
+}
+
 @Component({
   selector: 'app-expenses-page',
   standalone: true,
-  imports: [AsyncPipe, CurrencyPipe, DatePipe, FormsModule, NgFor, NgIf, UiButtonComponent, UiCardComponent],
+  imports: [CurrencyPipe, DatePipe, FormsModule, NgFor, NgIf, UiButtonComponent, UiCardComponent],
   templateUrl: './expenses-page.component.html',
   styleUrl: './expenses-page.component.css'
 })
 export class ExpensesPageComponent implements OnInit {
-  readonly createdExpenses$ = this.expensesFacade.createdExpenses$;
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly categories = signal<ExpenseCategory[]>([]);
   readonly familyMembers = signal<FamilyMember[]>([]);
-  readonly editingExpense = signal<Expense | null>(null);
+  readonly expenses = signal<ExpenseListItem[]>([]);
+  readonly expenseGroups = computed<ExpenseGroup[]>(() => this.groupByDate(this.expenses()));
+  readonly editingExpense = signal<ExpenseListItem | null>(null);
   readonly isSubmitting = signal(false);
+  readonly isLoading = signal(false);
+  readonly hasLoaded = signal(false);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
+  readonly totalAmount = signal(0);
+  readonly total = signal(0);
+  readonly page = signal(0);
+  readonly size = signal(20);
+  readonly totalPages = signal(0);
   readonly today = new Date().toISOString().slice(0, 10);
-  readonly items = [
-    { name: 'Aluguel', category: 'Moradia', amount: 'R$ 1.500,00' },
-    { name: 'Supermercado', category: 'Alimentacao', amount: 'R$ 487,20' },
-    { name: 'Combustivel', category: 'Transporte', amount: 'R$ 320,00' },
-    { name: 'Farmacia', category: 'Saude', amount: 'R$ 189,90' }
-  ];
+
+  selectedCategoryId = '';
+  selectedMemberId = '';
   form: ExpenseEditForm = this.emptyForm();
 
   constructor(
     private readonly categoriesFacade: CategoriesFacade,
     private readonly expensesFacade: ExpensesFacade,
-    private readonly familyMembersFacade: FamilyMembersFacade
+    private readonly familyMembersFacade: FamilyMembersFacade,
+    readonly monthService: MonthService
   ) {}
 
   ngOnInit(): void {
     this.loadOptions();
+    this.monthService.period$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadExpenses(0));
+    this.expensesFacade.refresh$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadExpenses(this.page()));
   }
 
-  openEdit(expense: Expense): void {
+  applyFilters(): void {
+    this.loadExpenses(0);
+  }
+
+  clearFilters(): void {
+    this.selectedCategoryId = '';
+    this.selectedMemberId = '';
+    this.loadExpenses(0);
+  }
+
+  nextPage(): void {
+    if (this.page() + 1 >= this.totalPages()) {
+      return;
+    }
+    this.loadExpenses(this.page() + 1);
+  }
+
+  prevPage(): void {
+    if (this.page() === 0) {
+      return;
+    }
+    this.loadExpenses(this.page() - 1);
+  }
+
+  openEdit(expense: ExpenseListItem): void {
     this.editingExpense.set(expense);
     this.form = {
       description: expense.description,
       amount: this.formatAmount(expense.amount),
       expenseDate: expense.expenseDate,
-      categoryId: expense.categoryId ?? '',
-      familyMemberId: expense.familyMemberId ?? '',
+      categoryId: expense.category?.id ?? '',
+      familyMemberId: expense.familyMember?.id ?? '',
       paymentMethod: expense.paymentMethod ?? '',
       notes: expense.notes ?? '',
       isFixed: expense.fixed
@@ -96,7 +141,7 @@ export class ExpensesPageComponent implements OnInit {
     });
   }
 
-  deleteExpense(expense: Expense): void {
+  deleteExpense(expense: ExpenseListItem): void {
     if (!window.confirm('Remover este gasto ou parcela?')) {
       return;
     }
@@ -107,7 +152,7 @@ export class ExpensesPageComponent implements OnInit {
     });
   }
 
-  deleteInstallmentGroup(expense: Expense): void {
+  deleteInstallmentGroup(expense: ExpenseListItem): void {
     if (!expense.installmentGroupId) {
       return;
     }
@@ -122,9 +167,69 @@ export class ExpensesPageComponent implements OnInit {
     });
   }
 
+  categoryLabel(expense: ExpenseListItem): string {
+    return expense.category?.name ?? 'Sem categoria';
+  }
+
+  categoryIcon(expense: ExpenseListItem): string {
+    return expense.category?.icon ?? '#';
+  }
+
+  memberLabel(expense: ExpenseListItem): string {
+    return expense.familyMember?.name ?? 'Meu';
+  }
+
+  paymentLabel(expense: ExpenseListItem): string {
+    return expense.paymentMethod || 'Sem forma';
+  }
+
+  private loadExpenses(page: number): void {
+    const period = this.monthService.period();
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.expensesFacade.list({
+      month: period.month,
+      year: period.year,
+      categoryId: this.selectedCategoryId || null,
+      memberId: this.selectedMemberId || null,
+      page,
+      size: this.size()
+    }).pipe(
+      catchError(() => {
+        this.errorMessage.set('Nao foi possivel carregar os gastos agora.');
+        return of(null);
+      }),
+      finalize(() => {
+        this.isLoading.set(false);
+        this.hasLoaded.set(true);
+      })
+    ).subscribe((response) => {
+      if (!response) {
+        return;
+      }
+      this.expenses.set(response.items);
+      this.totalAmount.set(response.totalAmount);
+      this.total.set(response.total);
+      this.page.set(response.page);
+      this.size.set(response.size);
+      this.totalPages.set(response.totalPages);
+    });
+  }
+
   private loadOptions(): void {
     this.categoriesFacade.list().pipe(catchError(() => of([]))).subscribe((categories) => this.categories.set(categories));
     this.familyMembersFacade.list().pipe(catchError(() => of([]))).subscribe((members) => this.familyMembers.set(members));
+  }
+
+  private groupByDate(expenses: ExpenseListItem[]): ExpenseGroup[] {
+    const groups = new Map<string, ExpenseListItem[]>();
+    for (const expense of expenses) {
+      const items = groups.get(expense.expenseDate) ?? [];
+      items.push(expense);
+      groups.set(expense.expenseDate, items);
+    }
+    return Array.from(groups.entries()).map(([date, items]) => ({ date, items }));
   }
 
   private toPayload(): ExpenseCreateRequest | null {
