@@ -12,6 +12,9 @@ import { FamilyMember } from '../../core/models/family-member.model';
 import { MonthService } from '../../core/services/month.service';
 import { UiButtonComponent } from '../../shared/ui/button/ui-button.component';
 import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
+import { BudgetsFacade } from '../../core/facades/budgets.facade';
+import { BudgetStatusItem } from '../../core/models/budget.model';
+import { budgetPercentLabel, budgetProgressWidth, budgetUsageTone } from '../../core/utils/budget-indicator.util';
 
 interface ExpenseEditForm {
   description: string;
@@ -42,7 +45,10 @@ export class ExpensesPageComponent implements OnInit {
   readonly categories = signal<ExpenseCategory[]>([]);
   readonly familyMembers = signal<FamilyMember[]>([]);
   readonly expenses = signal<ExpenseListItem[]>([]);
+  readonly budgetStatus = signal<BudgetStatusItem[]>([]);
   readonly expenseGroups = computed<ExpenseGroup[]>(() => this.groupByDate(this.expenses()));
+  readonly budgetByCategory = computed(() => this.indexBudgets(this.budgetStatus()));
+  readonly visibleBudgetStatus = computed(() => this.budgetStatus().filter((item) => item.amountLimit !== null || item.spentAmount > 0));
   readonly editingExpense = signal<ExpenseListItem | null>(null);
   readonly isSubmitting = signal(false);
   readonly isLoading = signal(false);
@@ -64,6 +70,7 @@ export class ExpensesPageComponent implements OnInit {
     private readonly categoriesFacade: CategoriesFacade,
     private readonly expensesFacade: ExpensesFacade,
     private readonly familyMembersFacade: FamilyMembersFacade,
+    private readonly budgetsFacade: BudgetsFacade,
     readonly monthService: MonthService
   ) {}
 
@@ -71,10 +78,19 @@ export class ExpensesPageComponent implements OnInit {
     this.loadOptions();
     this.monthService.period$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadExpenses(0));
+      .subscribe(() => {
+        this.loadExpenses(0);
+        this.loadBudgets();
+      });
     this.expensesFacade.refresh$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadExpenses(this.page()));
+      .subscribe(() => {
+        this.loadExpenses(this.page());
+        this.loadBudgets();
+      });
+    this.budgetsFacade.changed$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadBudgets());
   }
 
   applyFilters(): void {
@@ -183,6 +199,22 @@ export class ExpensesPageComponent implements OnInit {
     return expense.paymentMethod || 'Sem forma';
   }
 
+  budgetForExpense(expense: ExpenseListItem): BudgetStatusItem | null {
+    return expense.category?.id ? this.budgetByCategory().get(expense.category.id) ?? null : null;
+  }
+
+  budgetUsageClass(item: BudgetStatusItem): string {
+    return budgetUsageTone(item.pctUsed);
+  }
+
+  budgetProgressWidth(item: BudgetStatusItem): string {
+    return budgetProgressWidth(item.pctUsed);
+  }
+
+  budgetPercentLabel(item: BudgetStatusItem): string {
+    return budgetPercentLabel(item.pctUsed);
+  }
+
   private loadExpenses(page: number): void {
     const period = this.monthService.period();
     this.isLoading.set(true);
@@ -217,6 +249,13 @@ export class ExpensesPageComponent implements OnInit {
     });
   }
 
+  private loadBudgets(): void {
+    const period = this.monthService.period();
+    this.budgetsFacade.status(period.month, period.year).pipe(
+      catchError(() => of({ month: period.month, year: period.year, items: [] }))
+    ).subscribe((response) => this.budgetStatus.set(response.items));
+  }
+
   private loadOptions(): void {
     this.categoriesFacade.list().pipe(catchError(() => of([]))).subscribe((categories) => this.categories.set(categories));
     this.familyMembersFacade.list().pipe(catchError(() => of([]))).subscribe((members) => this.familyMembers.set(members));
@@ -230,6 +269,10 @@ export class ExpensesPageComponent implements OnInit {
       groups.set(expense.expenseDate, items);
     }
     return Array.from(groups.entries()).map(([date, items]) => ({ date, items }));
+  }
+
+  private indexBudgets(items: BudgetStatusItem[]): Map<string, BudgetStatusItem> {
+    return new Map(items.map((item) => [item.category.id, item]));
   }
 
   private toPayload(): ExpenseCreateRequest | null {

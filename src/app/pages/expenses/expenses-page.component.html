@@ -43,6 +43,22 @@
                       <span class="separator">/</span>
                       {{ paymentLabel(expense) }}
                     </p>
+                    @if (budgetForExpense(expense); as budget) {
+                      <div
+                        class="budget-inline"
+                        [class.ok]="budgetUsageClass(budget) === 'ok'"
+                        [class.warning]="budgetUsageClass(budget) === 'warning'"
+                        [class.danger]="budgetUsageClass(budget) === 'danger'"
+                      >
+                        <div class="budget-inline-head">
+                          <span>{{ budgetPercentLabel(budget) }}</span>
+                          <b *ngIf="budget.overBudget">Acima do orcamento</b>
+                        </div>
+                        <div class="budget-meter">
+                          <span [style.width]="budgetProgressWidth(budget)"></span>
+                        </div>
+                      </div>
+                    }
                   </div>
                 </div>
 
@@ -100,6 +116,33 @@
             {{ member.name }}
           </button>
         </div>
+      </ui-card>
+
+      <ui-card class="panel budget-summary">
+        <h2>Orcamento</h2>
+        <p class="empty-state" *ngIf="visibleBudgetStatus().length === 0">Sem indicadores para este mes.</p>
+        <ul class="budget-summary-list" *ngIf="visibleBudgetStatus().length > 0">
+          <li *ngFor="let budget of visibleBudgetStatus()">
+            <div>
+              <strong>{{ budget.category.name }}</strong>
+              <p>{{ budget.spentAmount | currency:'BRL':'symbol':'1.2-2' }} gasto</p>
+            </div>
+            <div
+              class="budget-inline"
+              [class.ok]="budgetUsageClass(budget) === 'ok'"
+              [class.warning]="budgetUsageClass(budget) === 'warning'"
+              [class.danger]="budgetUsageClass(budget) === 'danger'"
+            >
+              <div class="budget-inline-head">
+                <span>{{ budgetPercentLabel(budget) }}</span>
+                <b *ngIf="budget.overBudget">Acima do orcamento</b>
+              </div>
+              <div class="budget-meter">
+                <span [style.width]="budgetProgressWidth(budget)"></span>
+              </div>
+            </div>
+          </li>
+        </ul>
       </ui-card>
     </aside>
   </div>
