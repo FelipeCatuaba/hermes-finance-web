@@ -1,50 +1,103 @@
-﻿<section class="dashboard-stack">
+<section class="dashboard-stack">
   <header class="page-header">
     <div>
       <h1>Dashboard</h1>
-      <p>Visão mensal consolidada de receitas, gastos e família.</p>
+      <p>Visao mensal consolidada de receitas, gastos e familia.</p>
     </div>
-    <div class="health-pill">API {{ (health$ | async)?.status ?? 'offline' }}</div>
+    <div class="month-pill">{{ monthService.label() }}</div>
   </header>
 
-  @if (snapshot$ | async; as snapshot) {
-    <div class="kpi-grid">
-      <ui-kpi-card *ngFor="let kpi of snapshot.kpis" [kpi]="kpi" />
-    </div>
+  @if (state$ | async; as state) {
+    <p class="feedback error" *ngIf="state.error">{{ state.error }}</p>
 
-    <div class="content-grid">
-      <ui-card class="panel chart-panel">
-        <h2>Gastos por categoria</h2>
-        <ul class="metric-list">
-          <li *ngFor="let item of snapshot.expenseByCategory">
-            <span>{{ item.name }}</span>
-            <strong>{{ item.amount }}</strong>
-          </li>
-        </ul>
-      </ui-card>
+    @if (state.report; as report) {
+      <div class="kpi-grid">
+        <article class="metric-card income">
+          <span>Receitas</span>
+          <strong>{{ report.income.total | currency:'BRL':'symbol':'1.2-2' }}</strong>
+        </article>
+        <article class="metric-card owner">
+          <span>Meus gastos</span>
+          <strong>{{ report.ownerExpenses.total | currency:'BRL':'symbol':'1.2-2' }}</strong>
+        </article>
+        <article class="metric-card family">
+          <span>Gastos familia</span>
+          <strong>{{ report.familyExpenses.total | currency:'BRL':'symbol':'1.2-2' }}</strong>
+        </article>
+        <article class="metric-card balance" [class.negative]="report.summary.ownerBalance < 0">
+          <span>Saldo titular</span>
+          <strong>{{ report.summary.ownerBalance | currency:'BRL':'symbol':'1.2-2' }}</strong>
+        </article>
+      </div>
 
-      <div class="right-stack">
+      <div class="content-grid">
         <ui-card class="panel">
-          <h2>Resumo da família</h2>
-          <ul class="metric-list compact">
-            <li *ngFor="let highlight of snapshot.familyHighlights">
-              <span>{{ highlight }}</span>
+          <div class="panel-header">
+            <h2>Receitas do mes</h2>
+            <span>{{ report.income.items.length }} item(ns)</span>
+          </div>
+          <p class="empty-state" *ngIf="report.income.items.length === 0">Sem receitas registradas neste mes.</p>
+          <ul class="metric-list income-list" *ngIf="report.income.items.length > 0">
+            <li *ngFor="let income of report.income.items">
+              <div>
+                <strong>{{ income.description }}</strong>
+                <p>{{ income.incomeDate | date:'dd/MM/yyyy':'UTC' }} {{ income.recurring ? '/ recorrente' : '' }}</p>
+              </div>
+              <span>{{ income.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
             </li>
           </ul>
         </ui-card>
 
-        <ui-card class="panel savings-panel">
-          <h2>Poupança mensal</h2>
-          <div class="ring-row">
-            <div class="ring">22%</div>
-            <div>
-              <p class="ring-label">Meta atual</p>
-              <strong>R$ 1.820,00</strong>
-            </div>
+        <ui-card class="panel">
+          <div class="panel-header">
+            <h2>Meus gastos por categoria</h2>
+            <span>{{ percentLabel(report.summary.savingsRate) }} economia</span>
+          </div>
+          <p class="empty-state" *ngIf="report.ownerExpenses.byCategory.length === 0">Sem gastos próprios neste mes.</p>
+          <ul class="metric-list owner-list" *ngIf="report.ownerExpenses.byCategory.length > 0">
+            <li *ngFor="let item of report.ownerExpenses.byCategory">
+              <div>
+                <strong>{{ categoryName(item) }}</strong>
+                <p>{{ percentLabel(item.pctOfIncome) }} da receita</p>
+              </div>
+              <span>{{ item.total | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </li>
+          </ul>
+        </ui-card>
+
+        <ui-card class="panel">
+          <div class="panel-header">
+            <h2>Gastos da familia</h2>
+            <span>Fora da economia do titular</span>
+          </div>
+          <p class="empty-state" *ngIf="report.familyExpenses.byMember.length === 0">Sem gastos familiares neste mes.</p>
+          <ul class="metric-list family-list" *ngIf="report.familyExpenses.byMember.length > 0">
+            <li *ngFor="let item of report.familyExpenses.byMember">
+              <div>
+                <strong>{{ memberName(item) }}</strong>
+                <p>{{ item.familyMember?.relation || 'Membro familiar' }}</p>
+              </div>
+              <span>{{ item.total | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </li>
+          </ul>
+        </ui-card>
+
+        <ui-card class="panel summary-panel">
+          <h2>Resumo</h2>
+          <div class="summary-row">
+            <span>Total de gastos</span>
+            <strong>{{ report.summary.totalExpenses | currency:'BRL':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Saldo do titular</span>
+            <strong>{{ report.summary.ownerBalance | currency:'BRL':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Taxa de economia</span>
+            <strong>{{ percentLabel(report.summary.savingsRate) }}</strong>
           </div>
         </ui-card>
       </div>
-    </div>
+    }
   }
 </section>
-
