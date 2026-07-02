@@ -76,6 +76,30 @@ export interface ExpenseCreateRequest {
   isFixed?: boolean;
 }
 
+export interface ExpenseBulkCreateRequest {
+  description: string | null;
+  amount: number | null;
+  expenseDate: string | null;
+  categoryId?: string | null;
+  familyMemberId?: string | null;
+  paymentMethod?: string | null;
+  notes?: string | null;
+  isFixed?: boolean;
+}
+
+export interface ExpenseBulkCreateResponse {
+  createdCount: number;
+  failedCount: number;
+  created: Expense[];
+  errors: ExpenseBulkItemError[];
+}
+
+export interface ExpenseBulkItemError {
+  index: number;
+  field: string;
+  message: string;
+}
+
 export interface ExpenseInstallmentCreateRequest {
   description: string;
   totalAmount: number;

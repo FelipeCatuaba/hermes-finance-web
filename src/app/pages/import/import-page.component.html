@@ -1,0 +1,90 @@
+<section class="import-stack">
+  <header class="page-header">
+    <div>
+      <h1>Importação</h1>
+      <p>Cadastre gastos em lote por tabela manual.</p>
+    </div>
+    <div class="limit-pill">{{ rows.length }}/{{ maxRows }} linhas</div>
+  </header>
+
+  <p class="feedback error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <ui-card class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Gastos anuais</h2>
+        <p>Linhas vazias são ignoradas no envio.</p>
+      </div>
+      <div class="actions">
+        <ui-button type="button" variant="secondary" (click)="addRow()" [disabled]="rows.length >= maxRows">Adicionar linha</ui-button>
+        <ui-button type="button" (click)="submit()" [disabled]="isSubmitting">{{ isSubmitting ? 'Importando...' : 'Importar' }}</ui-button>
+      </div>
+    </div>
+
+    <div class="import-table">
+      <div class="table-head">
+        <span>Descricao</span>
+        <span>Valor</span>
+        <span>Data</span>
+        <span>Categoria</span>
+        <span>De quem</span>
+        <span></span>
+      </div>
+
+      <div class="table-row" *ngFor="let row of rows; let i = index; trackBy: trackByRow">
+        <label>
+          <span>Descricao</span>
+          <input [name]="'description-' + row.id" maxlength="255" [(ngModel)]="row.description" />
+        </label>
+
+        <label>
+          <span>Valor</span>
+          <input [name]="'amount-' + row.id" inputmode="decimal" placeholder="0,00" [(ngModel)]="row.amount" />
+        </label>
+
+        <label>
+          <span>Data</span>
+          <input [name]="'expenseDate-' + row.id" type="date" [(ngModel)]="row.expenseDate" />
+        </label>
+
+        <label>
+          <span>Categoria</span>
+          <select [name]="'category-' + row.id" [(ngModel)]="row.categoryId">
+            <option value="">Sem categoria</option>
+            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>De quem</span>
+          <select [name]="'member-' + row.id" [(ngModel)]="row.familyMemberId">
+            <option value="">Meu</option>
+            <option *ngFor="let member of familyMembers" [value]="member.id">{{ member.name }}</option>
+          </select>
+        </label>
+
+        <button type="button" class="remove-btn" aria-label="Remover linha" (click)="removeRow(i)">x</button>
+
+        <ul class="row-errors" *ngIf="errorsForRow(row.id).length > 0">
+          <li *ngFor="let error of errorsForRow(row.id)">{{ error.field }}: {{ error.message }}</li>
+        </ul>
+      </div>
+    </div>
+  </ui-card>
+
+  <ui-card class="panel result-panel" *ngIf="result">
+    <h2>Resultado</h2>
+    <div class="summary-grid">
+      <div>
+        <span>Criados</span>
+        <strong>{{ result.createdCount }}</strong>
+      </div>
+      <div>
+        <span>Falhos</span>
+        <strong>{{ result.failedCount }}</strong>
+      </div>
+    </div>
+    <p *ngIf="result.errors.length === 0">Todos os gastos enviados foram importados.</p>
+    <p *ngIf="result.errors.length > 0">Corrija as linhas marcadas e envie novamente.</p>
+  </ui-card>
+</section>

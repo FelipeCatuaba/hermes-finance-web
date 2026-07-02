@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject, tap } from 'rxjs';
 import { ApiService } from '../http/api.service';
-import { Expense, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams } from '../models/expense.model';
+import { Expense, ExpenseBulkCreateRequest, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams } from '../models/expense.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExpensesFacade {
@@ -21,6 +21,17 @@ export class ExpensesFacade {
       tap((expense) => {
         this.createdExpensesSubject.next([expense, ...this.createdExpensesSubject.value]);
         this.refreshSubject.next();
+      })
+    );
+  }
+
+  bulkCreate(payload: ExpenseBulkCreateRequest[]) {
+    return this.api.bulkCreateExpenses(payload).pipe(
+      tap((response) => {
+        if (response.created.length > 0) {
+          this.createdExpensesSubject.next([...response.created, ...this.createdExpensesSubject.value]);
+          this.refreshSubject.next();
+        }
       })
     );
   }

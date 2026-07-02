@@ -9,6 +9,7 @@ import { SettingsPageComponent } from './pages/settings/settings-page.component'
 import { NotFoundPageComponent } from './pages/not-found/not-found-page.component';
 import { IncomePageComponent } from './pages/income/income-page.component';
 import { ExpensesPageComponent } from './pages/expenses/expenses-page.component';
+import { ImportPageComponent } from './pages/import/import-page.component';
 import { InstallmentsPageComponent } from './pages/installments/installments-page.component';
 import { ReportsPageComponent } from './pages/reports/reports-page.component';
 
@@ -23,6 +24,7 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardPageComponent },
       { path: 'income', component: IncomePageComponent },
       { path: 'expenses', component: ExpensesPageComponent },
+      { path: 'import', component: ImportPageComponent },
       { path: 'installments', component: InstallmentsPageComponent },
       { path: 'reports', component: ReportsPageComponent },
       { path: 'settings', component: SettingsPageComponent }
