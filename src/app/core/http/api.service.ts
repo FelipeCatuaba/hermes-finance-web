@@ -58,8 +58,20 @@ export class ApiService {
     return this.http.post<Expense>(`${this.baseUrl}/api/expenses`, payload);
   }
 
+  updateExpense(id: string, payload: ExpenseCreateRequest): Observable<Expense> {
+    return this.http.put<Expense>(`${this.baseUrl}/api/expenses/${id}`, payload);
+  }
+
+  deleteExpense(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/expenses/${id}`);
+  }
+
   createExpenseInstallments(payload: ExpenseInstallmentCreateRequest): Observable<Expense[]> {
     return this.http.post<Expense[]>(`${this.baseUrl}/api/expenses/installments`, payload);
+  }
+
+  deleteInstallmentGroup(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/installment-groups/${id}`);
   }
 
   getIncomes(month: number, year: number): Observable<Income[]> {
