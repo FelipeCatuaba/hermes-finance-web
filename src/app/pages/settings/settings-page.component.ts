@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { AsyncPipe, NgFor, NgIf } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AsyncPipe, CurrencyPipe, DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SettingsFacade } from '../../core/facades/settings.facade';
@@ -8,11 +9,14 @@ import { FamilyMembersFacade } from '../../core/facades/family-members.facade';
 import { FamilyMember } from '../../core/models/family-member.model';
 import { CategoriesFacade } from '../../core/facades/categories.facade';
 import { ExpenseCategory } from '../../core/models/expense-category.model';
+import { BudgetsFacade } from '../../core/facades/budgets.facade';
+import { BudgetStatusItem, BudgetUpsertRequest } from '../../core/models/budget.model';
+import { MonthService } from '../../core/services/month.service';
 
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [AsyncPipe, NgFor, NgIf, FormsModule, UiCardComponent],
+  imports: [AsyncPipe, CurrencyPipe, DecimalPipe, NgFor, NgIf, FormsModule, UiCardComponent],
   templateUrl: './settings-page.component.html',
   styleUrl: './settings-page.component.css'
 })
@@ -25,6 +29,10 @@ export class SettingsPageComponent {
   categories: ExpenseCategory[] = [];
   categoriesLoading = false;
   categoriesError = '';
+  budgetRows: BudgetStatusItem[] = [];
+  budgetDrafts: Record<string, string> = {};
+  budgetLoading = false;
+  budgetError = '';
 
   showForm = false;
   editingId: string | null = null;
@@ -44,10 +52,15 @@ export class SettingsPageComponent {
   constructor(
     private readonly settingsFacade: SettingsFacade,
     private readonly familyFacade: FamilyMembersFacade,
-    private readonly categoriesFacade: CategoriesFacade
+    private readonly categoriesFacade: CategoriesFacade,
+    private readonly budgetsFacade: BudgetsFacade,
+    readonly monthService: MonthService
   ) {
     this.loadFamilyMembers();
     this.loadCategories();
+    this.monthService.period$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.loadBudgets());
   }
 
   loadFamilyMembers() {
@@ -224,6 +237,114 @@ export class SettingsPageComponent {
         this.categoriesError = 'Não foi possível remover a categoria.';
       }
     });
+  }
+
+  loadBudgets() {
+    const { month, year } = this.monthService.period();
+    this.budgetLoading = true;
+    this.budgetError = '';
+
+    this.budgetsFacade.status(month, year).subscribe({
+      next: (response) => {
+        this.budgetRows = response.items;
+        this.budgetDrafts = response.items.reduce<Record<string, string>>((drafts, item) => {
+          drafts[item.category.id] = item.amountLimit === null ? '' : String(item.amountLimit);
+          return drafts;
+        }, {});
+        this.budgetLoading = false;
+      },
+      error: () => {
+        this.budgetLoading = false;
+        this.budgetError = 'Não foi possível carregar os orçamentos.';
+      }
+    });
+  }
+
+  saveBudget(row: BudgetStatusItem) {
+    const amountLimit = this.parseBudgetDraft(row);
+    if (amountLimit === null) {
+      return;
+    }
+
+    const { month, year } = this.monthService.period();
+    const payload: BudgetUpsertRequest = {
+      categoryId: row.category.id,
+      month,
+      year,
+      amountLimit
+    };
+
+    const request$ = row.budgetId
+      ? this.budgetsFacade.update(row.budgetId, payload)
+      : this.budgetsFacade.create(payload);
+
+    request$.subscribe({
+      next: () => this.loadBudgets(),
+      error: () => {
+        this.budgetError = 'Não foi possível salvar o orçamento.';
+      }
+    });
+  }
+
+  clearBudget(row: BudgetStatusItem) {
+    this.budgetDrafts[row.category.id] = '';
+    if (!row.budgetId) {
+      return;
+    }
+
+    this.budgetsFacade.delete(row.budgetId).subscribe({
+      next: () => this.loadBudgets(),
+      error: () => {
+        this.budgetError = 'Não foi possível remover o orçamento.';
+      }
+    });
+  }
+
+  copyPreviousBudgets() {
+    const { month, year } = this.monthService.period();
+    this.budgetLoading = true;
+    this.budgetError = '';
+
+    this.budgetsFacade.copyPrevious(month, year).subscribe({
+      next: () => this.loadBudgets(),
+      error: () => {
+        this.budgetLoading = false;
+        this.budgetError = 'Não foi possível copiar o mês anterior.';
+      }
+    });
+  }
+
+  budgetUsageClass(row: BudgetStatusItem): string {
+    if (row.pctUsed === null) {
+      return 'neutral';
+    }
+    if (row.pctUsed >= 100) {
+      return 'danger';
+    }
+    if (row.pctUsed >= 70) {
+      return 'warning';
+    }
+    return 'ok';
+  }
+
+  budgetProgressWidth(row: BudgetStatusItem): string {
+    if (row.pctUsed === null) {
+      return '0%';
+    }
+    return `${Math.min(row.pctUsed, 100)}%`;
+  }
+
+  private parseBudgetDraft(row: BudgetStatusItem): number | null {
+    const rawValue = (this.budgetDrafts[row.category.id] ?? '').trim().replace(',', '.');
+    const amountLimit = Number(rawValue);
+
+    if (!rawValue || Number.isNaN(amountLimit) || amountLimit <= 0) {
+      this.budgetError = 'Informe um limite maior que zero.';
+      return null;
+    }
+
+    this.budgetError = '';
+    return amountLimit;
   }
 
   getCategoryIcon(icon: string | null): string {
