@@ -6,11 +6,14 @@ import { ExpensesFacade } from '../../core/facades/expenses.facade';
 import { FamilyMembersFacade } from '../../core/facades/family-members.facade';
 import { ExpenseListItem, ExpenseListResponse } from '../../core/models/expense.model';
 import { MonthService } from '../../core/services/month.service';
+import { BudgetsFacade } from '../../core/facades/budgets.facade';
 
 describe('ExpensesPageComponent', () => {
   let fixture: ComponentFixture<ExpensesPageComponent>;
   let expensesFacade: jasmine.SpyObj<ExpensesFacade>;
+  let budgetsFacade: jasmine.SpyObj<BudgetsFacade>;
   let refresh$: Subject<void>;
+  let budgetChanged$: Subject<void>;
 
   const expense: ExpenseListItem = {
     id: 'expense-1',
@@ -41,6 +44,7 @@ describe('ExpensesPageComponent', () => {
 
   beforeEach(async () => {
     refresh$ = new Subject<void>();
+    budgetChanged$ = new Subject<void>();
     expensesFacade = jasmine.createSpyObj<ExpensesFacade>('ExpensesFacade', ['list', 'update', 'delete', 'deleteInstallmentGroup'], {
       refresh$: refresh$.asObservable()
     });
@@ -64,6 +68,23 @@ describe('ExpensesPageComponent', () => {
     }));
     expensesFacade.delete.and.returnValue(of(undefined));
     expensesFacade.deleteInstallmentGroup.and.returnValue(of(undefined));
+    budgetsFacade = jasmine.createSpyObj<BudgetsFacade>('BudgetsFacade', ['status'], {
+      changed$: budgetChanged$.asObservable()
+    });
+    budgetsFacade.status.and.returnValue(of({
+      month: 3,
+      year: 2026,
+      items: [
+        {
+          category: { id: 'category-1', name: 'Mercado', icon: 'cart', colorHex: '#5b82ff' },
+          budgetId: 'budget-1',
+          amountLimit: 200,
+          spentAmount: 120.5,
+          pctUsed: 60.25,
+          overBudget: false
+        }
+      ]
+    }));
 
     await TestBed.configureTestingModule({
       imports: [ExpensesPageComponent],
@@ -81,6 +102,7 @@ describe('ExpensesPageComponent', () => {
           }
         },
         { provide: ExpensesFacade, useValue: expensesFacade },
+        { provide: BudgetsFacade, useValue: budgetsFacade },
         {
           provide: MonthService,
           useValue: {
@@ -107,6 +129,7 @@ describe('ExpensesPageComponent', () => {
     });
     expect(fixture.componentInstance.expenses()).toEqual([expense]);
     expect(fixture.componentInstance.totalAmount()).toBe(120.5);
+    expect(budgetsFacade.status).toHaveBeenCalledWith(3, 2026);
   });
 
   it('applies combined filters to the same month', () => {
@@ -124,6 +147,15 @@ describe('ExpensesPageComponent', () => {
       page: 0,
       size: 20
     });
+  });
+
+  it('refreshes budget indicators when expenses refresh', () => {
+    budgetsFacade.status.calls.reset();
+
+    refresh$.next();
+
+    expect(expensesFacade.list).toHaveBeenCalledTimes(2);
+    expect(budgetsFacade.status).toHaveBeenCalledWith(3, 2026);
   });
 
   it('prefills edit modal and submits update payload', () => {

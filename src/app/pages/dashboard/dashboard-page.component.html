@@ -59,8 +59,60 @@
               <div>
                 <strong>{{ categoryName(item) }}</strong>
                 <p>{{ percentLabel(item.pctOfIncome) }} da receita</p>
+                @if (budgetForCategory(state, item.category?.id); as budget) {
+                  <div
+                    class="budget-inline"
+                    [class.ok]="budgetUsageClass(budget) === 'ok'"
+                    [class.warning]="budgetUsageClass(budget) === 'warning'"
+                    [class.danger]="budgetUsageClass(budget) === 'danger'"
+                  >
+                    <div class="budget-inline-head">
+                      <span>{{ budgetPercentLabel(budget) }}</span>
+                      <b *ngIf="budget.overBudget">Acima do orcamento</b>
+                    </div>
+                    <div class="budget-meter">
+                      <span [style.width]="budgetProgressWidth(budget)"></span>
+                    </div>
+                  </div>
+                }
               </div>
               <span>{{ item.total | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </li>
+          </ul>
+        </ui-card>
+
+        <ui-card class="panel">
+          <div class="panel-header">
+            <h2>Orcamento do mes</h2>
+            <span>{{ visibleBudgetItems(state.budgetItems).length }} categoria(s)</span>
+          </div>
+          <p class="empty-state" *ngIf="visibleBudgetItems(state.budgetItems).length === 0">Sem orcamentos ou gastos por categoria neste mes.</p>
+          <ul class="metric-list budget-list" *ngIf="visibleBudgetItems(state.budgetItems).length > 0">
+            <li *ngFor="let budget of visibleBudgetItems(state.budgetItems)">
+              <div>
+                <strong>{{ budget.category.name }}</strong>
+                <p>
+                  {{ budget.spentAmount | currency:'BRL':'symbol':'1.2-2' }}
+                  @if (budget.amountLimit !== null) {
+                    <span> de {{ budget.amountLimit | currency:'BRL':'symbol':'1.2-2' }}</span>
+                  }
+                </p>
+                <div
+                  class="budget-inline"
+                  [class.ok]="budgetUsageClass(budget) === 'ok'"
+                  [class.warning]="budgetUsageClass(budget) === 'warning'"
+                  [class.danger]="budgetUsageClass(budget) === 'danger'"
+                >
+                  <div class="budget-inline-head">
+                    <span>{{ budgetPercentLabel(budget) }}</span>
+                    <b *ngIf="budget.overBudget">Acima do orcamento</b>
+                  </div>
+                  <div class="budget-meter">
+                    <span [style.width]="budgetProgressWidth(budget)"></span>
+                  </div>
+                </div>
+              </div>
+              <span>{{ budget.amountLimit === null ? '--' : (budget.amountLimit | currency:'BRL':'symbol':'1.2-2') }}</span>
             </li>
           </ul>
         </ui-card>

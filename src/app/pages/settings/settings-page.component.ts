@@ -12,6 +12,7 @@ import { ExpenseCategory } from '../../core/models/expense-category.model';
 import { BudgetsFacade } from '../../core/facades/budgets.facade';
 import { BudgetStatusItem, BudgetUpsertRequest } from '../../core/models/budget.model';
 import { MonthService } from '../../core/services/month.service';
+import { budgetProgressWidth, budgetUsageTone } from '../../core/utils/budget-indicator.util';
 
 @Component({
   selector: 'app-settings-page',
@@ -315,23 +316,11 @@ export class SettingsPageComponent {
   }
 
   budgetUsageClass(row: BudgetStatusItem): string {
-    if (row.pctUsed === null) {
-      return 'neutral';
-    }
-    if (row.pctUsed >= 100) {
-      return 'danger';
-    }
-    if (row.pctUsed >= 70) {
-      return 'warning';
-    }
-    return 'ok';
+    return budgetUsageTone(row.pctUsed);
   }
 
   budgetProgressWidth(row: BudgetStatusItem): string {
-    if (row.pctUsed === null) {
-      return '0%';
-    }
-    return `${Math.min(row.pctUsed, 100)}%`;
+    return budgetProgressWidth(row.pctUsed);
   }
 
   private parseBudgetDraft(row: BudgetStatusItem): number | null {
