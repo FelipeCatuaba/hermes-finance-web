@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { HealthStatus, MonthlyReport } from '../models/dashboard.model';
 import { FamilyMember, FamilyMemberUpsertRequest } from '../models/family-member.model';
 import { ExpenseCategory, ExpenseCategoryUpsertRequest } from '../models/expense-category.model';
-import { Expense, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams, ExpenseListResponse } from '../models/expense.model';
+import { Expense, ExpenseBulkCreateRequest, ExpenseBulkCreateResponse, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams, ExpenseListResponse } from '../models/expense.model';
 import { Income, IncomeUpsertRequest } from '../models/income.model';
 
 @Injectable({ providedIn: 'root' })
@@ -80,6 +80,10 @@ export class ApiService {
 
   createExpense(payload: ExpenseCreateRequest): Observable<Expense> {
     return this.http.post<Expense>(`${this.baseUrl}/api/expenses`, payload);
+  }
+
+  bulkCreateExpenses(payload: ExpenseBulkCreateRequest[]): Observable<ExpenseBulkCreateResponse> {
+    return this.http.post<ExpenseBulkCreateResponse>(`${this.baseUrl}/api/expenses/bulk`, payload);
   }
 
   updateExpense(id: string, payload: ExpenseCreateRequest): Observable<Expense> {
