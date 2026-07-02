@@ -13,6 +13,7 @@ import { BudgetsFacade } from '../../core/facades/budgets.facade';
 import { BudgetStatusItem, BudgetUpsertRequest } from '../../core/models/budget.model';
 import { MonthService } from '../../core/services/month.service';
 import { budgetProgressWidth, budgetUsageTone } from '../../core/utils/budget-indicator.util';
+import { AuthAccountSummary, AuthProfileSection, AuthSessionService } from '../../core/auth/auth-session.service';
 
 @Component({
   selector: 'app-settings-page',
@@ -34,6 +35,10 @@ export class SettingsPageComponent {
   budgetDrafts: Record<string, string> = {};
   budgetLoading = false;
   budgetError = '';
+  accountSummary: AuthAccountSummary | null = null;
+  accountLoading = false;
+  accountMessage = '';
+  accountError = '';
 
   showForm = false;
   editingId: string | null = null;
@@ -55,10 +60,12 @@ export class SettingsPageComponent {
     private readonly familyFacade: FamilyMembersFacade,
     private readonly categoriesFacade: CategoriesFacade,
     private readonly budgetsFacade: BudgetsFacade,
+    readonly auth: AuthSessionService,
     readonly monthService: MonthService
   ) {
     this.loadFamilyMembers();
     this.loadCategories();
+    this.refreshAccountSummary();
     this.monthService.period$
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.loadBudgets());
@@ -321,6 +328,34 @@ export class SettingsPageComponent {
 
   budgetProgressWidth(row: BudgetStatusItem): string {
     return budgetProgressWidth(row.pctUsed);
+  }
+
+  async openAccountProfile(section: AuthProfileSection) {
+    this.accountLoading = true;
+    this.accountError = '';
+    this.accountMessage = '';
+
+    const result = await this.auth.openUserProfile(section);
+    this.accountLoading = false;
+    if (!result.ok) {
+      this.accountError = result.message ?? 'Nao foi possivel abrir o gerenciamento da conta.';
+      return;
+    }
+
+    this.accountMessage = 'Gerenciamento da conta aberto pelo Clerk.';
+  }
+
+  async refreshAccountSummary() {
+    this.accountLoading = true;
+    this.accountError = '';
+
+    try {
+      this.accountSummary = await this.auth.refreshAccountSummary();
+    } catch {
+      this.accountError = 'Nao foi possivel atualizar os dados da conta.';
+    } finally {
+      this.accountLoading = false;
+    }
   }
 
   private parseBudgetDraft(row: BudgetStatusItem): number | null {

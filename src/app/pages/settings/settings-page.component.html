@@ -161,9 +161,50 @@
         }
       </ui-card>
 
-      <ui-card class="panel">
-        <h2>Segurança</h2>
-        <p class="security-copy">{{ snapshot.securityLabel }}</p>
+      <ui-card class="panel account-panel">
+        <div class="card-head">
+          <div>
+            <h2>Conta e segurança</h2>
+            <p class="period-copy">{{ snapshot.securityLabel }}</p>
+          </div>
+          <button type="button" class="ghost-btn" (click)="refreshAccountSummary()" [disabled]="accountLoading">Atualizar</button>
+        </div>
+
+        @if (!auth.isConfigured()) {
+          <p class="security-copy">Clerk não está configurado neste ambiente. Defina a chave pública para gerenciar email, senha e sessões.</p>
+        }
+
+        @if (auth.isConfigured()) {
+          <div class="account-summary">
+            <div>
+              <span>Usuário</span>
+              <strong>{{ accountSummary?.name || 'Conta autenticada' }}</strong>
+            </div>
+            <div>
+              <span>Email principal</span>
+              <strong>{{ accountSummary?.email || 'Carregando...' }}</strong>
+            </div>
+            <div>
+              <span>Senha</span>
+              <strong>{{ accountSummary?.passwordEnabled ? 'Ativa no Clerk' : 'Gerenciada pelo provedor' }}</strong>
+            </div>
+          </div>
+
+          <div class="account-actions">
+            <button type="button" class="solid-btn" (click)="openAccountProfile('profile')" [disabled]="accountLoading">Perfil</button>
+            <button type="button" class="ghost-btn" (click)="openAccountProfile('email')" [disabled]="accountLoading">Email</button>
+            <button type="button" class="ghost-btn" (click)="openAccountProfile('password')" [disabled]="accountLoading">Senha</button>
+            <button type="button" class="ghost-btn" (click)="openAccountProfile('sessions')" [disabled]="accountLoading">Sessões</button>
+          </div>
+        }
+
+        @if (accountMessage) {
+          <p class="helper-copy">{{ accountMessage }}</p>
+        }
+
+        @if (accountError) {
+          <p class="error-copy">{{ accountError }}</p>
+        }
       </ui-card>
     </div>
   }

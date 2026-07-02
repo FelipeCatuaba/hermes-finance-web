@@ -7,11 +7,13 @@ import { CategoriesFacade } from '../../core/facades/categories.facade';
 import { BudgetsFacade } from '../../core/facades/budgets.facade';
 import { MonthService } from '../../core/services/month.service';
 import { BudgetStatusResponse } from '../../core/models/budget.model';
+import { AuthSessionService } from '../../core/auth/auth-session.service';
 
 describe('SettingsPageComponent', () => {
   let fixture: ComponentFixture<SettingsPageComponent>;
   let component: SettingsPageComponent;
   let budgetsFacade: jasmine.SpyObj<BudgetsFacade>;
+  let auth: jasmine.SpyObj<AuthSessionService>;
 
   beforeEach(async () => {
     budgetsFacade = jasmine.createSpyObj<BudgetsFacade>('BudgetsFacade', ['status', 'create', 'update', 'delete', 'copyPrevious']);
@@ -34,6 +36,15 @@ describe('SettingsPageComponent', () => {
     }));
     budgetsFacade.delete.and.returnValue(of(void 0));
     budgetsFacade.copyPrevious.and.returnValue(of([]));
+    auth = jasmine.createSpyObj<AuthSessionService>('AuthSessionService', ['isConfigured', 'refreshAccountSummary', 'openUserProfile']);
+    auth.isConfigured.and.returnValue(true);
+    auth.refreshAccountSummary.and.resolveTo({
+      userId: 'user-1',
+      name: 'Felipe Catuaba',
+      email: 'felipe@example.com',
+      passwordEnabled: true
+    });
+    auth.openUserProfile.and.resolveTo({ ok: true });
 
     await TestBed.configureTestingModule({
       imports: [SettingsPageComponent],
@@ -52,6 +63,7 @@ describe('SettingsPageComponent', () => {
         { provide: FamilyMembersFacade, useValue: { list: () => of([]) } },
         { provide: CategoriesFacade, useValue: { list: () => of([]) } },
         { provide: BudgetsFacade, useValue: budgetsFacade },
+        { provide: AuthSessionService, useValue: auth },
         {
           provide: MonthService,
           useValue: {
@@ -65,6 +77,8 @@ describe('SettingsPageComponent', () => {
 
     fixture = TestBed.createComponent(SettingsPageComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -107,6 +121,21 @@ describe('SettingsPageComponent', () => {
 
     expect(budgetsFacade.copyPrevious).toHaveBeenCalledWith(3, 2026);
     expect(budgetsFacade.status).toHaveBeenCalledTimes(2);
+  });
+
+  it('loads Clerk account summary in settings', () => {
+    expect(auth.refreshAccountSummary).toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('felipe@example.com');
+  });
+
+  it('opens Clerk profile sections from account actions', async () => {
+    await component.openAccountProfile('email');
+    await component.openAccountProfile('password');
+    await component.openAccountProfile('sessions');
+
+    expect(auth.openUserProfile).toHaveBeenCalledWith('email');
+    expect(auth.openUserProfile).toHaveBeenCalledWith('password');
+    expect(auth.openUserProfile).toHaveBeenCalledWith('sessions');
   });
 });
 
