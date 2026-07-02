@@ -20,4 +20,8 @@ export class DashboardFacade {
   getYearlyReport(year: number) {
     return this.api.getYearlyReport(year);
   }
+
+  getOpenInstallmentsReport() {
+    return this.api.getOpenInstallmentsReport();
+  }
 }

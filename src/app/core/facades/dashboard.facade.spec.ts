@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { DashboardFacade } from './dashboard.facade';
 import { ApiService } from '../http/api.service';
-import { MonthlyReport, YearlyReport } from '../models/dashboard.model';
+import { MonthlyReport, OpenInstallmentsReport, YearlyReport } from '../models/dashboard.model';
 
 describe('DashboardFacade', () => {
   it('returns fallback health when API fails', (done) => {
@@ -14,7 +14,8 @@ describe('DashboardFacade', () => {
           useValue: {
             getHealth: () => throwError(() => new Error('offline')),
             getMonthlyReport: () => of(monthlyReport()),
-            getYearlyReport: () => of(yearlyReport())
+            getYearlyReport: () => of(yearlyReport()),
+            getOpenInstallmentsReport: () => of(openInstallmentsReport())
           }
         }
       ]
@@ -29,7 +30,7 @@ describe('DashboardFacade', () => {
   });
 
   it('delegates monthly report loading to the API', (done) => {
-    const api = jasmine.createSpyObj<ApiService>('ApiService', ['getHealth', 'getMonthlyReport', 'getYearlyReport']);
+    const api = jasmine.createSpyObj<ApiService>('ApiService', ['getHealth', 'getMonthlyReport', 'getYearlyReport', 'getOpenInstallmentsReport']);
     api.getMonthlyReport.and.returnValue(of(monthlyReport()));
     TestBed.configureTestingModule({
       providers: [
@@ -48,7 +49,7 @@ describe('DashboardFacade', () => {
   });
 
   it('delegates yearly report loading to the API', (done) => {
-    const api = jasmine.createSpyObj<ApiService>('ApiService', ['getHealth', 'getMonthlyReport', 'getYearlyReport']);
+    const api = jasmine.createSpyObj<ApiService>('ApiService', ['getHealth', 'getMonthlyReport', 'getYearlyReport', 'getOpenInstallmentsReport']);
     api.getYearlyReport.and.returnValue(of(yearlyReport()));
     TestBed.configureTestingModule({
       providers: [
@@ -62,6 +63,25 @@ describe('DashboardFacade', () => {
     facade.getYearlyReport(2026).subscribe((report) => {
       expect(api.getYearlyReport).toHaveBeenCalledWith(2026);
       expect(report.months.length).toBe(12);
+      done();
+    });
+  });
+
+  it('delegates open installments report loading to the API', (done) => {
+    const api = jasmine.createSpyObj<ApiService>('ApiService', ['getHealth', 'getMonthlyReport', 'getYearlyReport', 'getOpenInstallmentsReport']);
+    api.getOpenInstallmentsReport.and.returnValue(of(openInstallmentsReport()));
+    TestBed.configureTestingModule({
+      providers: [
+        DashboardFacade,
+        { provide: ApiService, useValue: api }
+      ]
+    });
+
+    const facade = TestBed.inject(DashboardFacade);
+
+    facade.getOpenInstallmentsReport().subscribe((report) => {
+      expect(api.getOpenInstallmentsReport).toHaveBeenCalled();
+      expect(report.totalCommitted).toBe(800);
       done();
     });
   });
@@ -111,5 +131,25 @@ function yearlyReport(): YearlyReport {
       familyExpensesTotal: index === 0 ? 300 : 0,
       savingsRate: index === 0 ? 75 : null
     }))
+  };
+}
+
+function openInstallmentsReport(): OpenInstallmentsReport {
+  return {
+    totalCommitted: 800,
+    groups: [
+      {
+        id: 'group-1',
+        description: 'Notebook',
+        totalAmount: 1200,
+        paidInstallments: 4,
+        totalInstallments: 12,
+        nextDueDate: '2026-07-10',
+        futureTotal: 800,
+        futureInstallments: [
+          { id: 'installment-5', installmentNumber: 5, amount: 100, dueDate: '2026-07-10' }
+        ]
+      }
+    ]
   };
 }

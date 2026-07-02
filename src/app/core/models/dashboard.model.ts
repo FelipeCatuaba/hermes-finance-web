@@ -41,6 +41,29 @@ export interface YearlyReportMonth {
   savingsRate: number | null;
 }
 
+export interface OpenInstallmentsReport {
+  totalCommitted: number;
+  groups: OpenInstallmentGroup[];
+}
+
+export interface OpenInstallmentGroup {
+  id: string;
+  description: string;
+  totalAmount: number;
+  paidInstallments: number;
+  totalInstallments: number;
+  nextDueDate: string;
+  futureTotal: number;
+  futureInstallments: OpenInstallmentItem[];
+}
+
+export interface OpenInstallmentItem {
+  id: string;
+  installmentNumber: number;
+  amount: number;
+  dueDate: string;
+}
+
 export interface MonthlyIncomeItem {
   id: string;
   description: string;
