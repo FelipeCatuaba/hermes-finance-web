@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AsyncPipe, CurrencyPipe, DecimalPipe, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe, CurrencyPipe, DatePipe, DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SettingsFacade } from '../../core/facades/settings.facade';
@@ -14,11 +14,13 @@ import { BudgetStatusItem, BudgetUpsertRequest } from '../../core/models/budget.
 import { MonthService } from '../../core/services/month.service';
 import { budgetProgressWidth, budgetUsageTone } from '../../core/utils/budget-indicator.util';
 import { AuthAccountSummary, AuthProfileSection, AuthSessionService } from '../../core/auth/auth-session.service';
+import { ShareFacade } from '../../core/facades/share.facade';
+import { ShareToken } from '../../core/models/share.model';
 
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [AsyncPipe, CurrencyPipe, DecimalPipe, NgFor, NgIf, FormsModule, UiCardComponent],
+  imports: [AsyncPipe, CurrencyPipe, DatePipe, DecimalPipe, NgFor, NgIf, FormsModule, UiCardComponent],
   templateUrl: './settings-page.component.html',
   styleUrl: './settings-page.component.css'
 })
@@ -28,6 +30,13 @@ export class SettingsPageComponent {
   familyMembers: FamilyMember[] = [];
   familyLoading = false;
   familyError = '';
+  shareLinks: ShareToken[] = [];
+  shareLoading = false;
+  shareError = '';
+  shareMessage = '';
+  creatingShareMemberId: string | null = null;
+  generatedShareUrl = '';
+  generatedShareMemberName = '';
   categories: ExpenseCategory[] = [];
   categoriesLoading = false;
   categoriesError = '';
@@ -58,12 +67,14 @@ export class SettingsPageComponent {
   constructor(
     private readonly settingsFacade: SettingsFacade,
     private readonly familyFacade: FamilyMembersFacade,
+    private readonly shareFacade: ShareFacade,
     private readonly categoriesFacade: CategoriesFacade,
     private readonly budgetsFacade: BudgetsFacade,
     readonly auth: AuthSessionService,
     readonly monthService: MonthService
   ) {
     this.loadFamilyMembers();
+    this.loadShareLinks();
     this.loadCategories();
     this.refreshAccountSummary();
     this.monthService.period$
@@ -149,6 +160,107 @@ export class SettingsPageComponent {
         this.familyError = 'Não foi possível desativar o membro.';
       }
     });
+  }
+
+  loadShareLinks() {
+    this.shareLoading = true;
+    this.shareError = '';
+
+    this.shareFacade.list().subscribe({
+      next: (links) => {
+        this.shareLinks = links;
+        this.shareLoading = false;
+      },
+      error: () => {
+        this.shareLoading = false;
+        this.shareError = 'Nao foi possivel carregar os links compartilhados.';
+      }
+    });
+  }
+
+  createShareLink(member: FamilyMember) {
+    const { month, year } = this.monthService.period();
+    this.creatingShareMemberId = member.id;
+    this.shareError = '';
+    this.shareMessage = '';
+    this.generatedShareUrl = '';
+
+    this.shareFacade.create({
+      familyMemberId: member.id,
+      month,
+      year,
+      expiresInDays: 7
+    }).subscribe({
+      next: (link) => {
+        this.creatingShareMemberId = null;
+        this.generatedShareUrl = link.shareUrl ?? '';
+        this.generatedShareMemberName = member.name;
+        this.shareMessage = 'Link criado para o periodo selecionado.';
+        this.loadShareLinks();
+      },
+      error: () => {
+        this.creatingShareMemberId = null;
+        this.shareError = 'Nao foi possivel criar o link de compartilhamento.';
+      }
+    });
+  }
+
+  async copyGeneratedShareUrl() {
+    if (!this.generatedShareUrl) {
+      return;
+    }
+
+    await navigator.clipboard?.writeText(this.generatedShareUrl);
+    this.shareMessage = 'Link copiado.';
+  }
+
+  async shareGeneratedLink() {
+    if (!this.generatedShareUrl) {
+      return;
+    }
+
+    const shareNavigator = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+    if (shareNavigator.share) {
+      await shareNavigator.share({
+        title: 'Extrato familiar',
+        url: this.generatedShareUrl
+      });
+      return;
+    }
+
+    await this.copyGeneratedShareUrl();
+  }
+
+  revokeShareLink(link: ShareToken) {
+    const shouldRevoke = window.confirm(`Revogar link de ${link.familyMemberName}?`);
+    if (!shouldRevoke) {
+      return;
+    }
+
+    this.shareFacade.revoke(link.id).subscribe({
+      next: () => {
+        this.shareMessage = 'Link revogado.';
+        this.loadShareLinks();
+      },
+      error: () => {
+        this.shareError = 'Nao foi possivel revogar o link.';
+      }
+    });
+  }
+
+  activeShareFor(member: FamilyMember): ShareToken | null {
+    const { month, year } = this.monthService.period();
+    return this.shareLinks.find((link) =>
+      link.familyMemberId === member.id &&
+      link.month === month &&
+      link.year === year &&
+      !link.revokedAt &&
+      new Date(link.expiresAt).getTime() > Date.now()
+    ) ?? null;
+  }
+
+  activeShareLinks(): ShareToken[] {
+    return this.shareLinks.filter((link) => !link.revokedAt && new Date(link.expiresAt).getTime() > Date.now());
   }
 
   loadCategories() {

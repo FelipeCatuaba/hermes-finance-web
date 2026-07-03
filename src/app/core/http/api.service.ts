@@ -8,6 +8,7 @@ import { ExpenseCategory, ExpenseCategoryUpsertRequest } from '../models/expense
 import { Expense, ExpenseBulkCreateRequest, ExpenseBulkCreateResponse, ExpenseCreateRequest, ExpenseInstallmentCreateRequest, ExpenseListParams, ExpenseListResponse } from '../models/expense.model';
 import { Income, IncomeUpsertRequest } from '../models/income.model';
 import { Budget, BudgetStatusResponse, BudgetUpsertRequest } from '../models/budget.model';
+import { PublicShareStatement, ShareCreateRequest, ShareToken } from '../models/share.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -153,5 +154,21 @@ export class ApiService {
 
   deleteIncome(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/api/incomes/${id}`);
+  }
+
+  createShareLink(payload: ShareCreateRequest): Observable<ShareToken> {
+    return this.http.post<ShareToken>(`${this.baseUrl}/api/share`, payload);
+  }
+
+  getShareLinks(): Observable<ShareToken[]> {
+    return this.http.get<ShareToken[]>(`${this.baseUrl}/api/share`);
+  }
+
+  revokeShareLink(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/share/${id}`);
+  }
+
+  getPublicShareStatement(token: string): Observable<PublicShareStatement> {
+    return this.http.get<PublicShareStatement>(`${this.baseUrl}/api/public/share/${token}`);
   }
 }

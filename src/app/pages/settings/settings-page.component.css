@@ -76,6 +76,9 @@ header p {
 
 .member-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.4rem;
 }
 
@@ -140,6 +143,67 @@ header p {
 
 .inactive {
   opacity: 0.55;
+}
+
+.share-status {
+  border: 1px solid rgba(15, 212, 176, 0.35);
+  border-radius: 999px;
+  color: #0fd4b0;
+  font-size: 0.68rem;
+  padding: 0.22rem 0.45rem;
+}
+
+.share-result {
+  margin-top: 0.75rem;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 8px;
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.share-result span,
+.share-list p {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+
+.share-result strong,
+.share-list strong {
+  color: var(--color-ink);
+  font-size: 0.84rem;
+}
+
+.share-result input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 8px;
+  background: var(--color-surface-dark);
+  color: var(--color-ink);
+  padding: 0.5rem 0.6rem;
+  font-size: 0.74rem;
+}
+
+.share-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.share-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  border-bottom: 1px solid var(--color-hairline-soft);
+  padding-bottom: 0.45rem;
+}
+
+.share-list p {
+  margin: 0.12rem 0 0;
 }
 
 .helper-copy {

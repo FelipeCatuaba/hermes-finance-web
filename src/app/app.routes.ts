@@ -12,10 +12,12 @@ import { ExpensesPageComponent } from './pages/expenses/expenses-page.component'
 import { ImportPageComponent } from './pages/import/import-page.component';
 import { InstallmentsPageComponent } from './pages/installments/installments-page.component';
 import { ReportsPageComponent } from './pages/reports/reports-page.component';
+import { PublicSharePageComponent } from './pages/public-share/public-share-page.component';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent, pathMatch: 'full', canActivate: [publicAuthResetGuard] },
   { path: 'auth', component: AuthPageComponent },
+  { path: 'share/:token', component: PublicSharePageComponent },
   {
     path: '',
     component: AppLayoutComponent,

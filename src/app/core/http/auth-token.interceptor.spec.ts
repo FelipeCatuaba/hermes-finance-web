@@ -34,4 +34,31 @@ describe('authTokenInterceptor', () => {
       httpMock.verify();
     }, 0);
   });
+
+  it('does not inject bearer token into public API requests', (done) => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([authTokenInterceptor])),
+        provideHttpClientTesting(),
+        {
+          provide: AuthSessionService,
+          useValue: {
+            getToken: jasmine.createSpy().and.resolveTo('token-123')
+          }
+        }
+      ]
+    });
+
+    const http = TestBed.inject(HttpClient);
+    const httpMock = TestBed.inject(HttpTestingController);
+
+    http.get('/api/public/share/raw-token').subscribe(() => {
+      done();
+    });
+
+    const req = httpMock.expectOne('/api/public/share/raw-token');
+    expect(req.request.headers.has('Authorization')).toBeFalse();
+    req.flush({ total: 0, expenses: [] });
+    httpMock.verify();
+  });
 });
