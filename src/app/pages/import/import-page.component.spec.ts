@@ -1,22 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ImportPageComponent } from './import-page.component';
+import { ApiService } from '../../core/http/api.service';
 import { CategoriesFacade } from '../../core/facades/categories.facade';
-import { ExpensesFacade } from '../../core/facades/expenses.facade';
 import { FamilyMembersFacade } from '../../core/facades/family-members.facade';
 
 describe('ImportPageComponent', () => {
   let fixture: ComponentFixture<ImportPageComponent>;
-  let expensesFacade: jasmine.SpyObj<ExpensesFacade>;
+  let api: jasmine.SpyObj<ApiService>;
 
   beforeEach(async () => {
-    expensesFacade = jasmine.createSpyObj<ExpensesFacade>('ExpensesFacade', ['bulkCreate']);
-    expensesFacade.bulkCreate.and.returnValue(of({
-      createdCount: 1,
-      failedCount: 0,
-      created: [],
-      errors: []
-    }));
+    api = jasmine.createSpyObj<ApiService>('ApiService', ['importExpenses', 'importIncomes']);
+    api.importExpenses.and.returnValue(of({ imported: 1, failed: 0, errors: [], monthsAffected: ['2026-03'] }));
+    api.importIncomes.and.returnValue(of({ imported: 1, failed: 0, errors: [], monthsAffected: ['2026-03'] }));
 
     await TestBed.configureTestingModule({
       imports: [ImportPageComponent],
@@ -33,7 +29,7 @@ describe('ImportPageComponent', () => {
             list: () => of([{ id: 'member-1', name: 'Isa', relation: null, active: true, createdAt: '' }])
           }
         },
-        { provide: ExpensesFacade, useValue: expensesFacade }
+        { provide: ApiService, useValue: api }
       ]
     }).compileComponents();
 
@@ -41,44 +37,74 @@ describe('ImportPageComponent', () => {
     fixture.detectChanges();
   });
 
-  it('submits non-empty rows as bulk expense payload', () => {
+  it('imports only valid expense preview rows', () => {
     const component = fixture.componentInstance;
-    component.rows[0] = {
-      ...component.rows[0],
-      description: 'Mercado',
-      amount: '120,50',
-      expenseDate: '2026-03-10',
-      categoryId: 'category-1',
-      familyMemberId: 'member-1'
-    };
-
-    component.submit();
-
-    expect(expensesFacade.bulkCreate).toHaveBeenCalledWith([
+    component.expenseRows = [
       {
+        index: 0,
+        lineNumber: 2,
+        raw: { descricao: 'Mercado', valor: '120,50', data: '2026-03-10' },
+        payload: {
+          index: 0,
+          description: 'Mercado',
+          amount: 120.5,
+          expenseDate: '2026-03-10',
+          categoryId: null,
+          familyMemberId: null
+        },
+        errors: []
+      },
+      {
+        index: 1,
+        lineNumber: 3,
+        raw: { descricao: '', valor: '0' },
+        payload: null,
+        errors: ['Descricao obrigatoria']
+      }
+    ];
+
+    component.submitActive();
+
+    expect(api.importExpenses).toHaveBeenCalledOnceWith([
+      jasmine.objectContaining({
+        index: 0,
         description: 'Mercado',
         amount: 120.5,
-        expenseDate: '2026-03-10',
-        categoryId: 'category-1',
-        familyMemberId: 'member-1'
-      }
+        expenseDate: '2026-03-10'
+      })
     ]);
   });
 
-  it('keeps failed rows and shows returned row errors', () => {
-    expensesFacade.bulkCreate.and.returnValue(of({
-      createdCount: 0,
-      failedCount: 1,
-      created: [],
-      errors: [{ index: 0, field: 'amount', message: 'Valor deve ser maior que zero' }]
-    }));
+  it('submits income rows when the active tab is incomes', () => {
     const component = fixture.componentInstance;
-    component.rows[0] = { ...component.rows[0], description: 'Mercado', amount: '0' };
+    component.setTab('incomes');
+    component.incomeRows = [
+      {
+        index: 0,
+        lineNumber: 2,
+        raw: { descricao: 'Salario', valor: 4500, data: '2026-03-05' },
+        payload: {
+          index: 0,
+          description: 'Salario',
+          amount: 4500,
+          incomeDate: '2026-03-05',
+          categoryId: null,
+          isRecurring: true,
+          notes: null
+        },
+        errors: []
+      }
+    ];
 
-    component.submit();
-    fixture.detectChanges();
+    component.submitActive();
 
-    expect(component.rows.length).toBe(1);
-    expect(fixture.nativeElement.textContent).toContain('amount: Valor deve ser maior que zero');
+    expect(api.importIncomes).toHaveBeenCalledOnceWith([
+      jasmine.objectContaining({
+        index: 0,
+        description: 'Salario',
+        amount: 4500,
+        incomeDate: '2026-03-05'
+      })
+    ]);
   });
 });

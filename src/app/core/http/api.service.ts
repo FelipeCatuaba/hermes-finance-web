@@ -9,6 +9,7 @@ import { Expense, ExpenseBulkCreateRequest, ExpenseBulkCreateResponse, ExpenseCr
 import { Income, IncomeUpsertRequest } from '../models/income.model';
 import { Budget, BudgetStatusResponse, BudgetUpsertRequest } from '../models/budget.model';
 import { PublicShareStatement, ShareCreateRequest, ShareToken } from '../models/share.model';
+import { ImportBatchResponse, ImportExpenseRequest, ImportIncomeRequest } from '../models/import.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -122,6 +123,10 @@ export class ApiService {
     return this.http.post<ExpenseBulkCreateResponse>(`${this.baseUrl}/api/expenses/bulk`, payload);
   }
 
+  importExpenses(payload: ImportExpenseRequest[]): Observable<ImportBatchResponse> {
+    return this.http.post<ImportBatchResponse>(`${this.baseUrl}/api/import/expenses`, payload);
+  }
+
   updateExpense(id: string, payload: ExpenseCreateRequest): Observable<Expense> {
     return this.http.put<Expense>(`${this.baseUrl}/api/expenses/${id}`, payload);
   }
@@ -146,6 +151,10 @@ export class ApiService {
 
   createIncome(payload: IncomeUpsertRequest): Observable<Income> {
     return this.http.post<Income>(`${this.baseUrl}/api/incomes`, payload);
+  }
+
+  importIncomes(payload: ImportIncomeRequest[]): Observable<ImportBatchResponse> {
+    return this.http.post<ImportBatchResponse>(`${this.baseUrl}/api/import/incomes`, payload);
   }
 
   updateIncome(id: string, payload: IncomeUpsertRequest): Observable<Income> {
