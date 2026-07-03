@@ -11,7 +11,7 @@ import { KpiItem } from '../../../core/models/dashboard.model';
       <span class="kpi-label">{{ kpi.label }}</span>
       <strong class="kpi-value">{{ kpi.value }}</strong>
       <span class="kpi-trend" [class.up]="kpi.trend === 'up'" [class.down]="kpi.trend === 'down'">
-        {{ kpi.trend === 'up' ? '? crescimento' : kpi.trend === 'down' ? '? redução' : '— estável' }}
+        {{ kpi.trend === 'up' ? '+ crescimento' : kpi.trend === 'down' ? '- reducao' : 'estavel' }}
       </span>
     </article>
   `,
@@ -20,7 +20,7 @@ import { KpiItem } from '../../../core/models/dashboard.model';
       border: 1px solid var(--color-hairline);
       border-radius: var(--radius-xl);
       padding: 20px;
-      background: #fff;
+      background: var(--color-surface-dark);
       display: grid;
       gap: 6px;
     }

@@ -9,6 +9,7 @@ import { MonthService } from '../../../core/services/month.service';
 import { ExpenseCategory } from '../../../core/models/expense-category.model';
 import { FamilyMember } from '../../../core/models/family-member.model';
 import { UiButtonComponent } from '../../ui/button/ui-button.component';
+import { ScopeToggleComponent } from '../../ui/scope-toggle/scope-toggle.component';
 
 interface ExpenseFormState {
   description: string;
@@ -32,16 +33,16 @@ interface InstallmentPreviewItem {
 @Component({
   selector: 'app-new-expense-fab',
   standalone: true,
-  imports: [CommonModule, FormsModule, UiButtonComponent],
+  imports: [CommonModule, FormsModule, UiButtonComponent, ScopeToggleComponent],
   template: `
     <button type="button" class="fab" aria-label="Novo lancamento" (click)="open()">+</button>
 
     <section class="sheet-backdrop" *ngIf="isOpen()" (click)="close()">
-      <form class="sheet" (click)="$event.stopPropagation()" (ngSubmit)="submit()">
+      <form class="sheet" role="dialog" aria-modal="true" aria-labelledby="new-expense-title" (click)="$event.stopPropagation()" (ngSubmit)="submit()">
         <header>
           <div>
             <p>Novo lancamento</p>
-            <h2>{{ form.isInstallment ? 'Compra parcelada' : 'Gasto avulso' }}</h2>
+            <h2 id="new-expense-title">{{ form.isInstallment ? 'Compra parcelada' : 'Gasto avulso' }}</h2>
           </div>
           <button type="button" class="icon-button" aria-label="Fechar" (click)="close()">x</button>
         </header>
@@ -78,13 +79,11 @@ interface InstallmentPreviewItem {
             </select>
           </label>
 
-          <label>
-            <span>De quem e</span>
-            <select name="familyMemberId" [(ngModel)]="form.familyMemberId">
-              <option value="">Meu</option>
-              <option *ngFor="let member of familyMembers()" [value]="member.id">{{ member.name }}</option>
-            </select>
-          </label>
+          <ui-scope-toggle
+            label="De quem e"
+            [(familyMemberId)]="form.familyMemberId"
+            [familyMembers]="familyMembers()"
+          />
         </div>
 
         <label>
@@ -146,7 +145,7 @@ interface InstallmentPreviewItem {
       border: 0;
       border-radius: 50%;
       background: var(--color-primary);
-      color: #fff;
+      color: var(--color-white);
       font-size: 28px;
       line-height: 1;
       box-shadow: var(--shadow-soft);
@@ -160,7 +159,7 @@ interface InstallmentPreviewItem {
       display: grid;
       place-items: end center;
       padding: 16px;
-      background: rgba(4, 6, 13, 0.62);
+      background: var(--color-overlay);
     }
 
     .sheet {
@@ -221,7 +220,7 @@ interface InstallmentPreviewItem {
       border: 1px solid var(--color-hairline);
       border-radius: 10px;
       padding: 12px 13px;
-      background: #fff;
+      background: var(--color-surface-strong);
       color: var(--color-ink);
       font: inherit;
       font-weight: 500;
@@ -236,7 +235,7 @@ interface InstallmentPreviewItem {
       height: 36px;
       border: 1px solid var(--color-hairline);
       border-radius: 50%;
-      background: #fff;
+      background: var(--color-surface-strong);
       cursor: pointer;
       font-size: 16px;
     }
@@ -302,7 +301,7 @@ interface InstallmentPreviewItem {
     @media (max-width: 680px) {
       .fab {
         right: 18px;
-        bottom: 18px;
+        bottom: 76px;
       }
 
       .field-grid,

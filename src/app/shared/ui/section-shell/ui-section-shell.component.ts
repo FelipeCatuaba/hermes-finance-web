@@ -17,7 +17,7 @@ import { Component, Input } from '@angular/core';
     }
     .section-shell.dark {
       background: var(--color-surface-dark);
-      color: #fff;
+      color: var(--color-white);
     }
   `]
 })

@@ -135,18 +135,19 @@
         </ui-card>
 
         <ui-card class="panel summary-panel">
-          <h2>Resumo</h2>
-          <div class="summary-row">
-            <span>Total de gastos</span>
-            <strong>{{ report.summary.totalExpenses | currency:'BRL':'symbol':'1.2-2' }}</strong>
+          <div class="summary-head">
+            <h2>Resumo</h2>
+            <ui-savings-ring [value]="report.summary.savingsRate" />
           </div>
-          <div class="summary-row">
-            <span>Saldo do titular</span>
-            <strong>{{ report.summary.ownerBalance | currency:'BRL':'symbol':'1.2-2' }}</strong>
-          </div>
-          <div class="summary-row">
-            <span>Taxa de economia</span>
-            <strong>{{ percentLabel(report.summary.savingsRate) }}</strong>
+          <div class="summary-copy">
+            <div class="summary-row">
+              <span>Total de gastos</span>
+              <strong>{{ report.summary.totalExpenses | currency:'BRL':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="summary-row">
+              <span>Saldo do titular</span>
+              <strong>{{ report.summary.ownerBalance | currency:'BRL':'symbol':'1.2-2' }}</strong>
+            </div>
           </div>
         </ui-card>
       </div>

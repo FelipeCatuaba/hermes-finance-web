@@ -153,6 +153,18 @@
   gap: 0.75rem;
 }
 
+.summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.summary-copy {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .summary-row {
   padding-bottom: 0.65rem;
 }
@@ -165,13 +177,9 @@
   color: var(--color-muted);
 }
 
-.budget-inline.ok {
-  color: #0f9f85;
-}
+.budget-inline.ok { color: var(--color-semantic-up); }
 
-.budget-inline.warning {
-  color: #bd7c08;
-}
+.budget-inline.warning { color: var(--color-accent-amber); }
 
 .budget-inline.danger {
   color: var(--color-semantic-down);
@@ -230,6 +238,11 @@
   }
 
   .panel-header {
+    flex-direction: column;
+  }
+
+  .summary-head {
+    align-items: flex-start;
     flex-direction: column;
   }
 

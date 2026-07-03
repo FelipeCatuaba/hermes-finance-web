@@ -21,7 +21,7 @@ import { FormsModule } from '@angular/forms';
       border: 1px solid var(--color-hairline);
       padding: 14px 16px;
       font: inherit;
-      background: #fff;
+      background: var(--color-surface-strong);
       color: var(--color-ink);
       transition: border-color 120ms ease;
     }

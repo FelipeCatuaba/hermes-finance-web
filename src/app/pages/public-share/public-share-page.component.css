@@ -1,6 +1,6 @@
 .public-share-page {
   min-height: 100vh;
-  background: var(--color-bg);
+  background: var(--color-canvas);
   color: var(--color-ink);
   padding: 1.25rem;
 }
@@ -24,7 +24,7 @@
 .statement-list {
   border: 1px solid var(--color-hairline-soft);
   border-radius: 8px;
-  background: var(--color-surface);
+  background: var(--color-surface-dark);
 }
 
 .statement-header {
@@ -87,7 +87,7 @@
 
 .expense-row > span {
   font-family: var(--font-mono);
-  color: var(--color-semantic-down);
+  color: var(--color-accent-amber);
   white-space: nowrap;
 }
 
@@ -109,9 +109,7 @@
   padding: 1rem;
 }
 
-.error h1 {
-  color: #f78598;
-}
+.error h1 { color: var(--color-semantic-down); }
 
 @media (max-width: 640px) {
   .public-share-page {

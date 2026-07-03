@@ -2,6 +2,7 @@
   --color-primary: #3461f5;
   --color-primary-active: #2048d8;
   --color-primary-disabled: #a8b8cc;
+  --color-primary-soft: #8ba5ff;
 
   --color-ink: #f0f4ff;
   --color-body: #a8b5d4;
@@ -22,6 +23,10 @@
   --color-accent-cyan: #38d9f5;
   --color-accent-teal: #0fd4b0;
   --color-accent-amber: #f59e0b;
+  --color-accent-violet: #8b5cf6;
+
+  --color-white: #ffffff;
+  --color-overlay: rgba(4, 6, 13, 0.62);
 
   --font-display: 'Instrument Serif', Georgia, serif;
   --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, system-ui, 'Segoe UI', sans-serif;
@@ -48,7 +53,7 @@
 
 .surface-dark {
   background: var(--color-surface-dark);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .section-container {
