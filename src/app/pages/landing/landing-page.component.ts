@@ -33,20 +33,23 @@ export class LandingPageComponent implements AfterViewInit, OnDestroy {
   private readonly onScrollRef = () => this.onScroll();
 
   ngAfterViewInit(): void {
-    const revealItems = Array.from(document.querySelectorAll('.reveal'));
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            this.observer?.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-    );
+    const revealItems = Array.from(document.querySelectorAll('.landing-page .reveal'));
+    if ('IntersectionObserver' in window && revealItems.length > 0) {
+      document.querySelector('.landing-page')?.classList.add('reveal-ready');
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              this.observer?.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+      );
 
-    revealItems.forEach((item) => this.observer?.observe(item));
+      revealItems.forEach((item) => this.observer?.observe(item));
+    }
     window.addEventListener('scroll', this.onScrollRef, { passive: true });
     this.onScroll();
   }
@@ -58,6 +61,17 @@ export class LandingPageComponent implements AfterViewInit, OnDestroy {
 
   private onScroll(): void {
     this.navScrolled.set(window.scrollY > 20);
+  }
+
+  scrollToAuth(event?: Event): void {
+    event?.preventDefault();
+    const authSection = document.getElementById('auth');
+    if (!authSection) {
+      return;
+    }
+
+    authSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => authSection.focus({ preventScroll: true }), 450);
   }
 }
 
