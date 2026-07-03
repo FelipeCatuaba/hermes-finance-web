@@ -27,9 +27,48 @@
                 </div>
               </div>
               <div class="member-actions">
+                <span *ngIf="activeShareFor(member)" class="share-status">Link ativo</span>
+                <button
+                  type="button"
+                  class="link-btn"
+                  (click)="createShareLink(member)"
+                  [disabled]="!member.active || creatingShareMemberId === member.id"
+                >
+                  Compartilhar
+                </button>
                 <button type="button" class="link-btn" (click)="openEditForm(member)">Editar</button>
                 <button type="button" class="link-btn danger" (click)="deactivateMember(member)" [disabled]="!member.active">Desativar</button>
               </div>
+            </li>
+          </ul>
+        }
+
+        @if (generatedShareUrl) {
+          <div class="share-result">
+            <div>
+              <span>Link gerado</span>
+              <strong>{{ generatedShareMemberName }}</strong>
+            </div>
+            <input type="text" [value]="generatedShareUrl" readonly aria-label="Link compartilhável gerado" />
+            <div class="form-actions">
+              <button type="button" class="ghost-btn" (click)="copyGeneratedShareUrl()">Copiar</button>
+              <button type="button" class="solid-btn" (click)="shareGeneratedLink()">Compartilhar</button>
+            </div>
+          </div>
+        }
+
+        @if (shareLoading) {
+          <p class="helper-copy">Carregando links...</p>
+        }
+
+        @if (!shareLoading && activeShareLinks().length > 0) {
+          <ul class="share-list">
+            <li *ngFor="let link of activeShareLinks()">
+              <div>
+                <strong>{{ link.familyMemberName }}</strong>
+                <p>{{ link.month }}/{{ link.year }} · expira em {{ link.expiresAt | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+              <button type="button" class="link-btn danger" (click)="revokeShareLink(link)">Revogar</button>
             </li>
           </ul>
         }
@@ -51,6 +90,14 @@
 
         @if (familyError) {
           <p class="error-copy">{{ familyError }}</p>
+        }
+
+        @if (shareMessage) {
+          <p class="helper-copy">{{ shareMessage }}</p>
+        }
+
+        @if (shareError) {
+          <p class="error-copy">{{ shareError }}</p>
         }
       </ui-card>
 

@@ -8,11 +8,13 @@ import { BudgetsFacade } from '../../core/facades/budgets.facade';
 import { MonthService } from '../../core/services/month.service';
 import { BudgetStatusResponse } from '../../core/models/budget.model';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
+import { ShareFacade } from '../../core/facades/share.facade';
 
 describe('SettingsPageComponent', () => {
   let fixture: ComponentFixture<SettingsPageComponent>;
   let component: SettingsPageComponent;
   let budgetsFacade: jasmine.SpyObj<BudgetsFacade>;
+  let shareFacade: jasmine.SpyObj<ShareFacade>;
   let auth: jasmine.SpyObj<AuthSessionService>;
 
   beforeEach(async () => {
@@ -36,6 +38,21 @@ describe('SettingsPageComponent', () => {
     }));
     budgetsFacade.delete.and.returnValue(of(void 0));
     budgetsFacade.copyPrevious.and.returnValue(of([]));
+    shareFacade = jasmine.createSpyObj<ShareFacade>('ShareFacade', ['list', 'create', 'revoke']);
+    shareFacade.list.and.returnValue(of([]));
+    shareFacade.create.and.returnValue(of({
+      id: 'share-1',
+      familyMemberId: 'member-1',
+      familyMemberName: 'Isa',
+      familyMemberRelation: 'Filha',
+      month: 3,
+      year: 2026,
+      expiresAt: '2026-03-08T00:00:00Z',
+      revokedAt: null,
+      createdAt: '2026-03-01T00:00:00Z',
+      shareUrl: 'https://app.hermes.local/share/raw-token'
+    }));
+    shareFacade.revoke.and.returnValue(of(void 0));
     auth = jasmine.createSpyObj<AuthSessionService>('AuthSessionService', ['isConfigured', 'refreshAccountSummary', 'openUserProfile']);
     auth.isConfigured.and.returnValue(true);
     auth.refreshAccountSummary.and.resolveTo({
@@ -61,6 +78,7 @@ describe('SettingsPageComponent', () => {
           }
         },
         { provide: FamilyMembersFacade, useValue: { list: () => of([]) } },
+        { provide: ShareFacade, useValue: shareFacade },
         { provide: CategoriesFacade, useValue: { list: () => of([]) } },
         { provide: BudgetsFacade, useValue: budgetsFacade },
         { provide: AuthSessionService, useValue: auth },
@@ -126,6 +144,18 @@ describe('SettingsPageComponent', () => {
   it('loads Clerk account summary in settings', () => {
     expect(auth.refreshAccountSummary).toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('felipe@example.com');
+  });
+
+  it('creates share link for selected global month', () => {
+    component.createShareLink({ id: 'member-1', name: 'Isa', relation: 'Filha', active: true, createdAt: '2026-01-01T00:00:00Z' });
+
+    expect(shareFacade.create).toHaveBeenCalledWith({
+      familyMemberId: 'member-1',
+      month: 3,
+      year: 2026,
+      expiresInDays: 7
+    });
+    expect(component.generatedShareUrl).toBe('https://app.hermes.local/share/raw-token');
   });
 
   it('opens Clerk profile sections from account actions', async () => {

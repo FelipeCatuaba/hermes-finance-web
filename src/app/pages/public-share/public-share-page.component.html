@@ -1,0 +1,41 @@
+<main class="public-share-page">
+  <section class="share-shell">
+    <a routerLink="/" class="brand-link">Hermes Finance</a>
+
+    <div *ngIf="loading" class="state-block">
+      <p>Carregando extrato...</p>
+    </div>
+
+    <div *ngIf="error" class="state-block error">
+      <h1>Extrato indisponível</h1>
+      <p>{{ error }}</p>
+    </div>
+
+    <ng-container *ngIf="statement as data">
+      <header class="statement-header">
+        <div>
+          <span>Extrato familiar</span>
+          <h1>{{ data.familyMemberName }}</h1>
+          <p>{{ data.familyMemberRelation || 'Membro familiar' }} · {{ periodLabel(data) }}</p>
+        </div>
+        <strong>{{ data.total | currency:'BRL':'symbol':'1.2-2' }}</strong>
+      </header>
+
+      <section class="statement-list">
+        <p *ngIf="data.expenses.length === 0" class="empty-copy">Nenhum gasto familiar neste período.</p>
+
+        <article *ngFor="let expense of data.expenses" class="expense-row">
+          <div>
+            <strong>{{ expense.description }}</strong>
+            <p>
+              {{ expense.expenseDate | date:'dd/MM/yyyy' }}
+              <span *ngIf="expense.category">· {{ expense.category.name }}</span>
+              <span *ngIf="expense.paymentMethod">· {{ expense.paymentMethod }}</span>
+            </p>
+          </div>
+          <span>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
+        </article>
+      </section>
+    </ng-container>
+  </section>
+</main>

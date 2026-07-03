@@ -7,6 +7,10 @@ import { AuthSessionService } from '../auth/auth-session.service';
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthSessionService);
 
+  if (req.url.includes('/api/public/')) {
+    return next(req);
+  }
+
   return from(auth.getToken()).pipe(
     switchMap((token) => {
       if (!token) {
