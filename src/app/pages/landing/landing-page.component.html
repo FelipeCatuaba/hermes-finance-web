@@ -1,16 +1,15 @@
-﻿<div class="landing-page">
-  <div class="glow-orb orb-1"></div>
-  <div class="glow-orb orb-2"></div>
+<div class="landing-page">
 
   <nav class="top-nav" [ngClass]="{ scrolled: navScrolled() }">
     <a class="nav-logo" routerLink="/">
-      <img src="assets/Hermes_logo.png" alt="Hermes" class="nav-logo-img" />
+      <img src="assets/Hermes_logo_64.png" width="28" height="28" alt="Hermes" class="nav-logo-img" />
       <span>HERMES</span>
     </a>
     <div class="nav-links">
       <a href="#features">Funcionalidades</a>
-      <a href="#how">Como funciona</a>
-      <a href="#family">Família</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#familia">Família</a>
+      <a href="#auth">Acesso</a>
     </div>
     <div class="nav-actions">
       <ui-button variant="secondary" routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Entrar</ui-button>
@@ -27,7 +26,7 @@
       Controle receitas, gastos e família em um único fluxo, com visão real de saldo e economia mensal.
     </p>
     <div class="hero-actions fade-in fade-delay-3">
-      <ui-button routerLink="/auth" [queryParams]="{ mode: 'sign-up' }">Começar agora</ui-button>
+      <ui-button (click)="scrollToAuth($event)">Começar agora</ui-button>
       <ui-button variant="secondary" routerLink="/auth" [queryParams]="{ mode: 'sign-in' }">Já tenho conta</ui-button>
     </div>
 
@@ -80,7 +79,7 @@
     </div>
   </section>
 
-  <section class="how" id="how">
+  <section class="how" id="como-funciona">
     <div class="section-container">
       <p class="section-kicker reveal">Como funciona</p>
       <h2 class="section-title reveal reveal-delay-1">Simples no dia a dia, completo no controle</h2>
@@ -93,7 +92,7 @@
     </div>
   </section>
 
-  <section class="family section-container" id="family">
+  <section class="family section-container" id="familia">
     <div>
       <p class="section-kicker reveal">Para a família</p>
       <h2 class="section-title reveal reveal-delay-1">Compartilhe extratos sem abrir sua conta</h2>
@@ -113,7 +112,7 @@
     </article>
   </section>
 
-  <section class="auth section-container" id="auth">
+  <section class="auth section-container" id="auth" tabindex="-1">
     <p class="section-kicker reveal">Acesso</p>
     <h2 class="section-title reveal reveal-delay-1">Comece agora ou entre na sua conta</h2>
     <div class="auth-grid reveal reveal-delay-2">

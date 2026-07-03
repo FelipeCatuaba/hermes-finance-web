@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Clerk } from '@clerk/clerk-js';
+import type { Clerk } from '@clerk/clerk-js';
 import { environment } from '../../../environments/environment';
 
 interface AuthState {
@@ -38,6 +38,20 @@ export class AuthSessionService {
     return Boolean(environment.clerkPublishableKey);
   }
 
+  hasSessionHint(): boolean {
+    if (this.state().isAuthenticated) {
+      return true;
+    }
+
+    if (!this.isConfigured() || typeof window === 'undefined') {
+      return false;
+    }
+
+    return this.hasClerkStorageHint(window.localStorage)
+      || this.hasClerkStorageHint(window.sessionStorage)
+      || document.cookie.split(';').some((cookie) => cookie.trim().startsWith('__session='));
+  }
+
   async init(): Promise<void> {
     const key = environment.clerkPublishableKey;
     if (!key) {
@@ -46,6 +60,7 @@ export class AuthSessionService {
     }
 
     if (!this.clerk) {
+      const { Clerk } = await import('@clerk/clerk-js');
       this.clerk = new Clerk(key);
       await this.clerk.load();
     }
@@ -260,17 +275,17 @@ export class AuthSessionService {
   }
 
   async handleRedirectCallbackIfPresent(): Promise<boolean> {
-    await this.init();
-    if (!this.clerk) {
-      return false;
-    }
-
     const search = window.location.search;
     const maybeOAuthReturn =
       search.includes('__clerk') ||
       search.includes('oauth') ||
       search.includes('rotating_token_nonce');
     if (!maybeOAuthReturn) {
+      return false;
+    }
+
+    await this.init();
+    if (!this.clerk) {
       return false;
     }
 
@@ -316,5 +331,20 @@ export class AuthSessionService {
       return fallback;
     }
     return firstMessage;
+  }
+
+  private hasClerkStorageHint(storage: Storage): boolean {
+    try {
+      for (let i = 0; i < storage.length; i += 1) {
+        const key = storage.key(i)?.toLowerCase() ?? '';
+        if (key.startsWith('clerk-db-jwt') || key.startsWith('clerk-db-session')) {
+          return true;
+        }
+      }
+    } catch {
+      return false;
+    }
+
+    return false;
   }
 }

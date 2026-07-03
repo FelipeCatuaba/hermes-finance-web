@@ -1,36 +1,59 @@
 import { Routes } from '@angular/router';
-import { LandingPageComponent } from './pages/landing/landing-page.component';
-import { AuthPageComponent } from './pages/auth/auth-page.component';
 import { authGuard } from './core/auth/auth.guard';
 import { publicAuthResetGuard } from './core/auth/public-auth-reset.guard';
-import { AppLayoutComponent } from './layouts/app-layout.component';
-import { DashboardPageComponent } from './pages/dashboard/dashboard-page.component';
-import { SettingsPageComponent } from './pages/settings/settings-page.component';
-import { NotFoundPageComponent } from './pages/not-found/not-found-page.component';
-import { IncomePageComponent } from './pages/income/income-page.component';
-import { ExpensesPageComponent } from './pages/expenses/expenses-page.component';
-import { ImportPageComponent } from './pages/import/import-page.component';
-import { InstallmentsPageComponent } from './pages/installments/installments-page.component';
-import { ReportsPageComponent } from './pages/reports/reports-page.component';
-import { PublicSharePageComponent } from './pages/public-share/public-share-page.component';
 
 export const routes: Routes = [
-  { path: '', component: LandingPageComponent, pathMatch: 'full', canActivate: [publicAuthResetGuard] },
-  { path: 'auth', component: AuthPageComponent },
-  { path: 'share/:token', component: PublicSharePageComponent },
   {
     path: '',
-    component: AppLayoutComponent,
+    pathMatch: 'full',
+    canActivate: [publicAuthResetGuard],
+    loadComponent: () => import('./pages/landing/landing-page.component').then((m) => m.LandingPageComponent)
+  },
+  {
+    path: 'auth',
+    loadComponent: () => import('./pages/auth/auth-page.component').then((m) => m.AuthPageComponent)
+  },
+  {
+    path: 'share/:token',
+    loadComponent: () => import('./pages/public-share/public-share-page.component').then((m) => m.PublicSharePageComponent)
+  },
+  {
+    path: '',
     canActivate: [authGuard],
+    loadComponent: () => import('./layouts/app-layout.component').then((m) => m.AppLayoutComponent),
     children: [
-      { path: 'dashboard', component: DashboardPageComponent },
-      { path: 'income', component: IncomePageComponent },
-      { path: 'expenses', component: ExpensesPageComponent },
-      { path: 'import', component: ImportPageComponent },
-      { path: 'installments', component: InstallmentsPageComponent },
-      { path: 'reports', component: ReportsPageComponent },
-      { path: 'settings', component: SettingsPageComponent }
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./pages/dashboard/dashboard-page.component').then((m) => m.DashboardPageComponent)
+      },
+      {
+        path: 'income',
+        loadComponent: () => import('./pages/income/income-page.component').then((m) => m.IncomePageComponent)
+      },
+      {
+        path: 'expenses',
+        loadComponent: () => import('./pages/expenses/expenses-page.component').then((m) => m.ExpensesPageComponent)
+      },
+      {
+        path: 'import',
+        loadComponent: () => import('./pages/import/import-page.component').then((m) => m.ImportPageComponent)
+      },
+      {
+        path: 'installments',
+        loadComponent: () => import('./pages/installments/installments-page.component').then((m) => m.InstallmentsPageComponent)
+      },
+      {
+        path: 'reports',
+        loadComponent: () => import('./pages/reports/reports-page.component').then((m) => m.ReportsPageComponent)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./pages/settings/settings-page.component').then((m) => m.SettingsPageComponent)
+      }
     ]
   },
-  { path: '**', component: NotFoundPageComponent }
+  {
+    path: '**',
+    loadComponent: () => import('./pages/not-found/not-found-page.component').then((m) => m.NotFoundPageComponent)
+  }
 ];

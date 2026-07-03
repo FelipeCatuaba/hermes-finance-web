@@ -1,31 +1,8 @@
-﻿.landing-page {
+.landing-page {
   position: relative;
   padding-bottom: 2rem;
 }
 
-.glow-orb {
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(80px);
-  z-index: 0;
-}
-
-.orb-1 {
-  width: 520px;
-  height: 520px;
-  top: -140px;
-  right: -120px;
-  background: radial-gradient(circle, rgba(52, 97, 245, 0.24) 0%, transparent 70%);
-}
-
-.orb-2 {
-  width: 400px;
-  height: 400px;
-  left: -120px;
-  top: 38%;
-  background: radial-gradient(circle, rgba(56, 217, 245, 0.16) 0%, transparent 70%);
-}
 
 .top-nav {
   position: fixed;
@@ -88,6 +65,7 @@
 .auth {
   position: relative;
   z-index: 1;
+  scroll-margin-top: 96px;
 }
 
 .hero {
@@ -485,6 +463,20 @@
   text-decoration: none;
 }
 
+.landing-page .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.landing-page.reveal-ready .reveal {
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+.landing-page.reveal-ready .reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
 @media (max-width: 1024px) {
   .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .steps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
