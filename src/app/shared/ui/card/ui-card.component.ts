@@ -16,7 +16,7 @@ import { NgClass } from '@angular/common';
     .dark {
       background: var(--color-surface-dark-elevated);
       border-color: transparent;
-      color: #fff;
+      color: var(--color-white);
     }
     .soft {
       background: var(--color-surface-soft);

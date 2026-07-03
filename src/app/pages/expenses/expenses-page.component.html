@@ -34,46 +34,13 @@
             <h3>{{ group.date | date:'EEEE, dd/MM':'UTC' }}</h3>
             <ul>
               <li *ngFor="let expense of group.items">
-                <div class="expense-main">
-                  <span class="category-dot">{{ categoryIcon(expense) }}</span>
-                  <div>
-                    <strong>{{ expense.description }}</strong>
-                    <p>
-                      {{ categoryLabel(expense) }}
-                      <span class="separator">/</span>
-                      {{ paymentLabel(expense) }}
-                    </p>
-                    @if (budgetForExpense(expense); as budget) {
-                      <div
-                        class="budget-inline"
-                        [class.ok]="budgetUsageClass(budget) === 'ok'"
-                        [class.warning]="budgetUsageClass(budget) === 'warning'"
-                        [class.danger]="budgetUsageClass(budget) === 'danger'"
-                      >
-                        <div class="budget-inline-head">
-                          <span>{{ budgetPercentLabel(budget) }}</span>
-                          <b *ngIf="budget.overBudget">Acima do orcamento</b>
-                        </div>
-                        <div class="budget-meter">
-                          <span [style.width]="budgetProgressWidth(budget)"></span>
-                        </div>
-                      </div>
-                    }
-                  </div>
-                </div>
-
-                <div class="expense-meta">
-                  <span class="member-badge">{{ memberLabel(expense) }}</span>
-                  <span class="installment-badge" *ngIf="expense.installmentNumber && expense.totalInstallments">
-                    {{ expense.installmentNumber }}/{{ expense.totalInstallments }}
-                  </span>
-                  <strong>{{ expense.amount | currency:'BRL':'symbol':'1.2-2' }}</strong>
-                  <div class="item-actions">
-                    <button type="button" (click)="openEdit(expense)">Editar</button>
-                    <button type="button" (click)="deleteExpense(expense)">Excluir esta</button>
-                    <button type="button" *ngIf="expense.installmentGroupId" (click)="deleteInstallmentGroup(expense)">Excluir todas</button>
-                  </div>
-                </div>
+                <ui-expense-item
+                  [expense]="expense"
+                  [budget]="budgetForExpense(expense)"
+                  (edit)="openEdit($event)"
+                  (remove)="deleteExpense($event)"
+                  (removeGroup)="deleteInstallmentGroup($event)"
+                />
               </li>
             </ul>
           </section>
@@ -148,11 +115,11 @@
   </div>
 
   <section class="sheet-backdrop" *ngIf="editingExpense()" (click)="closeEdit()">
-    <form class="sheet" (click)="$event.stopPropagation()" (ngSubmit)="submitEdit()">
+    <form class="sheet" role="dialog" aria-modal="true" aria-labelledby="edit-expense-title" (click)="$event.stopPropagation()" (ngSubmit)="submitEdit()">
       <header>
         <div>
           <p>Editar gasto</p>
-          <h2>{{ editingExpense()?.installmentGroupId ? 'Editar parcela' : 'Editar lancamento' }}</h2>
+          <h2 id="edit-expense-title">{{ editingExpense()?.installmentGroupId ? 'Editar parcela' : 'Editar lancamento' }}</h2>
         </div>
         <button type="button" class="icon-button" aria-label="Fechar" (click)="closeEdit()">x</button>
       </header>
@@ -183,13 +150,11 @@
           </select>
         </label>
 
-        <label>
-          <span>De quem e</span>
-          <select name="familyMemberId" [(ngModel)]="form.familyMemberId">
-            <option value="">Meu</option>
-            <option *ngFor="let member of familyMembers()" [value]="member.id">{{ member.name }}</option>
-          </select>
-        </label>
+        <ui-scope-toggle
+          label="De quem e"
+          [(familyMemberId)]="form.familyMemberId"
+          [familyMembers]="familyMembers()"
+        />
       </div>
 
       <label>

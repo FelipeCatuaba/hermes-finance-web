@@ -43,7 +43,7 @@ import { MonthService } from '../../../core/services/month.service';
     input {
       border-radius: var(--radius-pill);
       border: 1px solid var(--color-hairline);
-      background: #fff;
+      background: var(--color-surface-strong);
     }
 
     .nav-button {

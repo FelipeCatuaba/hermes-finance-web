@@ -27,6 +27,7 @@
                   type="button"
                   class="toggle-password-btn"
                   [attr.title]="showSignInPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  [attr.aria-label]="showSignInPassword() ? 'Ocultar senha' : 'Mostrar senha'"
                   (click)="toggleSignInPasswordVisibility()"
                 >
                   <i class="bi" [ngClass]="showSignInPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
@@ -62,6 +63,7 @@
                   type="button"
                   class="toggle-password-btn"
                   [attr.title]="showSignUpPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  [attr.aria-label]="showSignUpPassword() ? 'Ocultar senha' : 'Mostrar senha'"
                   (click)="toggleSignUpPasswordVisibility()"
                 >
                   <i class="bi" [ngClass]="showSignUpPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
@@ -82,6 +84,7 @@
                   type="button"
                   class="toggle-password-btn"
                   [attr.title]="showConfirmPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  [attr.aria-label]="showConfirmPassword() ? 'Ocultar senha' : 'Mostrar senha'"
                   (click)="toggleConfirmPasswordVisibility()"
                 >
                   <i class="bi" [ngClass]="showConfirmPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>

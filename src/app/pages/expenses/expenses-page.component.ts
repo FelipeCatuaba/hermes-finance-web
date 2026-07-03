@@ -15,6 +15,8 @@ import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
 import { BudgetsFacade } from '../../core/facades/budgets.facade';
 import { BudgetStatusItem } from '../../core/models/budget.model';
 import { budgetPercentLabel, budgetProgressWidth, budgetUsageTone } from '../../core/utils/budget-indicator.util';
+import { ExpenseItemComponent } from '../../shared/ui/expense-item/expense-item.component';
+import { ScopeToggleComponent } from '../../shared/ui/scope-toggle/scope-toggle.component';
 
 interface ExpenseEditForm {
   description: string;
@@ -35,7 +37,7 @@ interface ExpenseGroup {
 @Component({
   selector: 'app-expenses-page',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, FormsModule, NgFor, NgIf, UiButtonComponent, UiCardComponent],
+  imports: [CurrencyPipe, DatePipe, FormsModule, NgFor, NgIf, UiButtonComponent, UiCardComponent, ExpenseItemComponent, ScopeToggleComponent],
   templateUrl: './expenses-page.component.html',
   styleUrl: './expenses-page.component.css'
 })

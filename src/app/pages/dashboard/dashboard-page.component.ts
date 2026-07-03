@@ -10,6 +10,7 @@ import { UiCardComponent } from '../../shared/ui/card/ui-card.component';
 import { BudgetsFacade } from '../../core/facades/budgets.facade';
 import { BudgetStatusItem } from '../../core/models/budget.model';
 import { budgetPercentLabel, budgetProgressWidth, budgetUsageTone } from '../../core/utils/budget-indicator.util';
+import { SavingsRingComponent } from '../../shared/ui/savings-ring/savings-ring.component';
 
 interface DashboardState {
   report: MonthlyReport | null;
@@ -21,7 +22,7 @@ interface DashboardState {
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [AsyncPipe, CurrencyPipe, DatePipe, NgFor, NgIf, UiCardComponent],
+  imports: [AsyncPipe, CurrencyPipe, DatePipe, NgFor, NgIf, UiCardComponent, SavingsRingComponent],
   templateUrl: './dashboard-page.component.html',
   styleUrl: './dashboard-page.component.css'
 })
