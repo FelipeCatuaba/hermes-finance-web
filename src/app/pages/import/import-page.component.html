@@ -1,10 +1,10 @@
 <section class="import-stack">
   <header class="page-header">
     <div>
-      <h1>Importação</h1>
-      <p>Cadastre gastos em lote por tabela manual.</p>
+      <h1>Importacao</h1>
+      <p>Envie XLSX ou CSV, confira o preview e importe somente linhas validas.</p>
     </div>
-    <div class="limit-pill">{{ rows.length }}/{{ maxRows }} linhas</div>
+    <ui-button type="button" variant="secondary" (click)="downloadTemplate()">Baixar template</ui-button>
   </header>
 
   <p class="feedback error" *ngIf="errorMessage">{{ errorMessage }}</p>
@@ -12,79 +12,95 @@
   <ui-card class="panel">
     <div class="panel-header">
       <div>
-        <h2>Gastos anuais</h2>
-        <p>Linhas vazias são ignoradas no envio.</p>
+        <h2>Arquivo</h2>
+        <p *ngIf="!fileName">XLSX usa abas Gastos e Receitas. CSV entra na aba selecionada.</p>
+        <p *ngIf="fileName">{{ fileName }}</p>
       </div>
-      <div class="actions">
-        <ui-button type="button" variant="secondary" (click)="addRow()" [disabled]="rows.length >= maxRows">Adicionar linha</ui-button>
-        <ui-button type="button" (click)="submit()" [disabled]="isSubmitting">{{ isSubmitting ? 'Importando...' : 'Importar' }}</ui-button>
-      </div>
+      <label class="file-control">
+        <input type="file" accept=".xlsx,.csv" (change)="onFileSelected($event)" />
+        <span>{{ isParsing ? 'Lendo...' : 'Selecionar arquivo' }}</span>
+      </label>
     </div>
 
-    <div class="import-table">
-      <div class="table-head">
-        <span>Descricao</span>
-        <span>Valor</span>
-        <span>Data</span>
-        <span>Categoria</span>
-        <span>De quem</span>
-        <span></span>
+    <div class="tabs" role="tablist" aria-label="Tipo de importacao">
+      <button type="button" role="tab" [class.active]="activeTab === 'expenses'" (click)="setTab('expenses')">
+        Gastos
+        <span>{{ validCount('expenses') }}/{{ totalCount('expenses') }}</span>
+      </button>
+      <button type="button" role="tab" [class.active]="activeTab === 'incomes'" (click)="setTab('incomes')">
+        Receitas
+        <span>{{ validCount('incomes') }}/{{ totalCount('incomes') }}</span>
+      </button>
+    </div>
+
+    <div class="preview-summary">
+      <div>
+        <span>Validas</span>
+        <strong>{{ validCount(activeTab) }}</strong>
       </div>
-
-      <div class="table-row" *ngFor="let row of rows; let i = index; trackBy: trackByRow">
-        <label>
-          <span>Descricao</span>
-          <input [name]="'description-' + row.id" maxlength="255" [(ngModel)]="row.description" />
-        </label>
-
-        <label>
-          <span>Valor</span>
-          <input [name]="'amount-' + row.id" inputmode="decimal" placeholder="0,00" [(ngModel)]="row.amount" />
-        </label>
-
-        <label>
-          <span>Data</span>
-          <input [name]="'expenseDate-' + row.id" type="date" [(ngModel)]="row.expenseDate" />
-        </label>
-
-        <label>
-          <span>Categoria</span>
-          <select [name]="'category-' + row.id" [(ngModel)]="row.categoryId">
-            <option value="">Sem categoria</option>
-            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-          </select>
-        </label>
-
-        <label>
-          <span>De quem</span>
-          <select [name]="'member-' + row.id" [(ngModel)]="row.familyMemberId">
-            <option value="">Meu</option>
-            <option *ngFor="let member of familyMembers" [value]="member.id">{{ member.name }}</option>
-          </select>
-        </label>
-
-        <button type="button" class="remove-btn" aria-label="Remover linha" (click)="removeRow(i)">x</button>
-
-        <ul class="row-errors" *ngIf="errorsForRow(row.id).length > 0">
-          <li *ngFor="let error of errorsForRow(row.id)">{{ error.field }}: {{ error.message }}</li>
-        </ul>
+      <div>
+        <span>Com erro</span>
+        <strong>{{ invalidCount(activeTab) }}</strong>
       </div>
+      <div>
+        <span>Total</span>
+        <strong>{{ totalCount(activeTab) }}</strong>
+      </div>
+      <ui-button type="button" (click)="submitActive()" [disabled]="isSubmitting || validCount(activeTab) === 0">
+        {{ isSubmitting ? 'Importando...' : 'Importar validas' }}
+      </ui-button>
     </div>
   </ui-card>
 
+  <ui-card class="panel">
+    <div class="table-wrap" *ngIf="rowsForActiveTab().length > 0; else emptyPreview">
+      <div class="preview-table">
+        <div class="table-head">
+          <span>Linha</span>
+          <span>Status</span>
+          <span>Descricao</span>
+          <span>Valor</span>
+          <span>Data</span>
+          <span>Categoria</span>
+          <span *ngIf="activeTab === 'expenses'">Membro</span>
+          <span>Erros</span>
+        </div>
+
+        <div class="table-row" *ngFor="let row of rowsForActiveTab(); trackBy: trackByIndex" [ngClass]="{ invalid: !row.payload }">
+          <span class="line">{{ row.lineNumber }}</span>
+          <span class="status" [ngClass]="row.payload ? 'valid' : 'bad'">{{ row.payload ? 'Valida' : 'Erro' }}</span>
+          <span>{{ displayValue(row, ['descricao', 'description']) || '-' }}</span>
+          <span>{{ displayValue(row, ['valor', 'amount']) || '-' }}</span>
+          <span>{{ displayValue(row, ['data', 'expenseDate', 'incomeDate']) || '-' }}</span>
+          <span>{{ displayValue(row, ['categoria', 'category', 'categoryId']) || '-' }}</span>
+          <span *ngIf="activeTab === 'expenses'">{{ displayValue(row, ['membro', 'familyMember', 'familyMemberId', 'de_quem']) || '-' }}</span>
+          <span class="errors">{{ row.errors.length > 0 ? row.errors.join('; ') : '-' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #emptyPreview>
+      <p class="empty-state">Nenhum arquivo carregado para esta aba.</p>
+    </ng-template>
+  </ui-card>
+
   <ui-card class="panel result-panel" *ngIf="result">
-    <h2>Resultado</h2>
-    <div class="summary-grid">
+    <h2>Resultado {{ resultTab === 'expenses' ? 'dos gastos' : 'das receitas' }}</h2>
+    <div class="preview-summary">
       <div>
-        <span>Criados</span>
-        <strong>{{ result.createdCount }}</strong>
+        <span>Importados</span>
+        <strong>{{ result.imported }}</strong>
       </div>
       <div>
         <span>Falhos</span>
-        <strong>{{ result.failedCount }}</strong>
+        <strong>{{ result.failed }}</strong>
+      </div>
+      <div>
+        <span>Meses afetados</span>
+        <strong>{{ result.monthsAffected.length }}</strong>
       </div>
     </div>
-    <p *ngIf="result.errors.length === 0">Todos os gastos enviados foram importados.</p>
-    <p *ngIf="result.errors.length > 0">Corrija as linhas marcadas e envie novamente.</p>
+    <p *ngIf="result.monthsAffected.length > 0">{{ result.monthsAffected.join(', ') }}</p>
+    <p *ngIf="result.errors.length > 0">Algumas linhas validas no preview foram recusadas pelo servidor e voltaram marcadas na tabela.</p>
   </ui-card>
 </section>
