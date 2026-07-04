@@ -217,33 +217,20 @@
           <button type="button" class="ghost-btn" (click)="refreshAccountSummary()" [disabled]="accountLoading">Atualizar</button>
         </div>
 
-        @if (!auth.isConfigured()) {
-          <p class="security-copy">Clerk não está configurado neste ambiente. Defina a chave pública para gerenciar email, senha e sessões.</p>
-        }
-
-        @if (auth.isConfigured()) {
-          <div class="account-summary">
-            <div>
-              <span>Usuário</span>
-              <strong>{{ accountSummary?.name || 'Conta autenticada' }}</strong>
-            </div>
-            <div>
-              <span>Email principal</span>
-              <strong>{{ accountSummary?.email || 'Carregando...' }}</strong>
-            </div>
-            <div>
-              <span>Senha</span>
-              <strong>{{ accountSummary?.passwordEnabled ? 'Ativa no Clerk' : 'Gerenciada pelo provedor' }}</strong>
-            </div>
+        <div class="account-summary">
+          <div>
+            <span>Usuário</span>
+            <strong>{{ accountSummary?.name || 'Conta autenticada' }}</strong>
           </div>
-
-          <div class="account-actions">
-            <button type="button" class="solid-btn" (click)="openAccountProfile('profile')" [disabled]="accountLoading">Perfil</button>
-            <button type="button" class="ghost-btn" (click)="openAccountProfile('email')" [disabled]="accountLoading">Email</button>
-            <button type="button" class="ghost-btn" (click)="openAccountProfile('password')" [disabled]="accountLoading">Senha</button>
-            <button type="button" class="ghost-btn" (click)="openAccountProfile('sessions')" [disabled]="accountLoading">Sessões</button>
+          <div>
+            <span>Email principal</span>
+            <strong>{{ accountSummary?.email || 'Carregando...' }}</strong>
           </div>
-        }
+          <div>
+            <span>Autorização</span>
+            <strong>{{ accountSummary?.role || 'OWNER' }}</strong>
+          </div>
+        </div>
 
         @if (accountMessage) {
           <p class="helper-copy">{{ accountMessage }}</p>

@@ -34,8 +34,8 @@
                 </button>
               </div>
             </label>
-            <p class="field-status" [ngClass]="{ ok: signInPasswordValid, bad: signInForm.controls.password.touched && !signInPasswordValid }">
-              {{ signInPasswordValid ? 'Senha no padrão correto' : 'Senha com 8+ caracteres, maiúscula, minúscula, número e símbolo' }}
+            <p class="field-status" [ngClass]="{ bad: signInForm.controls.password.touched && !signInPasswordValid }">
+              {{ signInForm.controls.password.touched && !signInPasswordValid ? 'Informe sua senha' : '' }}
             </p>
             <label class="check-row">
               <input type="checkbox" formControlName="remember" />
@@ -104,21 +104,6 @@
           </form>
         }
 
-        <div class="divider"><span>OR</span></div>
-
-        <div id="clerk-captcha" aria-hidden="true"></div>
-
-        <div class="sso-stack">
-          <button type="button" class="sso-btn" (click)="signInWithSso('google')" [disabled]="isSubmitting()">
-            <i class="bi bi-google"></i>
-            Continuar com Google
-          </button>
-          <button type="button" class="sso-btn" (click)="signInWithSso('apple')" [disabled]="isSubmitting()">
-            <i class="bi bi-apple"></i>
-            Continuar com Apple
-          </button>
-        </div>
-
         @if (statusMessage()) {
           <p class="status-message">{{ statusMessage() }}</p>
         }
@@ -154,33 +139,6 @@
       <h3>Não foi possível continuar</h3>
       <p>{{ popupMessage() }}</p>
       <ui-button type="button" (click)="closePopup()">Fechar</ui-button>
-    </div>
-  </div>
-}
-
-@if (showVerificationPopup()) {
-  <div class="popup-backdrop" (click)="closeVerificationPopup()">
-    <div class="popup-card" (click)="$event.stopPropagation()">
-      <h3>Confirmar cadastro</h3>
-      <p>Digite o código enviado para o email cadastrado para concluir seu acesso.</p>
-      <label class="verify-label">
-        Código
-        <input
-          type="text"
-          [value]="verificationCode()"
-          (input)="verificationCode.set($any($event.target).value)"
-          placeholder="000000"
-          autocomplete="one-time-code"
-        />
-      </label>
-      <div class="verify-actions">
-        <button type="button" class="resend-link" (click)="resendVerificationCode()" [disabled]="isSubmitting()">
-          Reenviar código
-        </button>
-        <ui-button type="button" (click)="confirmVerificationCode()" [disabled]="isSubmitting() || !verificationCode().trim()">
-          {{ isSubmitting() ? 'Confirmando...' : 'Confirmar código' }}
-        </ui-button>
-      </div>
     </div>
   </div>
 }

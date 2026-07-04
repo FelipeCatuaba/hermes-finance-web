@@ -7,7 +7,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthSessionService);
 
-  if (req.url.includes('/api/public/')) {
+  if (req.url.includes('/api/public/') || req.url.includes('/api/auth/login') || req.url.includes('/api/auth/register') || req.url.includes('/api/auth/refresh')) {
     return next(req);
   }
 

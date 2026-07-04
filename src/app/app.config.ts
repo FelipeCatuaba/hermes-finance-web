@@ -7,9 +7,7 @@ import { AuthSessionService } from './core/auth/auth-session.service';
 
 function initializeAuth(auth: AuthSessionService) {
   return async () => {
-    if (auth.hasSessionHint()) {
-      await auth.init();
-    }
+    await auth.init();
   };
 }
 

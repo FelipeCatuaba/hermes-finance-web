@@ -6,10 +6,6 @@ export const publicAuthResetGuard: CanActivateFn = async () => {
   const auth = inject(AuthSessionService);
   const router = inject(Router);
 
-  if (!auth.hasSessionHint()) {
-    return true;
-  }
-
   const isAuthenticated = await auth.ensureAuthenticated();
 
   if (!isAuthenticated) {

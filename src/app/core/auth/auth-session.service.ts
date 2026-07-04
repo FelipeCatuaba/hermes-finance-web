@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
-import type { Clerk } from '@clerk/clerk-js';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 interface AuthState {
@@ -10,22 +11,40 @@ interface AuthState {
 
 export interface AuthActionResult {
   ok: boolean;
-  requiresEmailVerification?: boolean;
   message?: string;
 }
-
-export type AuthProfileSection = 'profile' | 'email' | 'password' | 'sessions';
 
 export interface AuthAccountSummary {
   userId: string;
   name: string;
   email: string;
+  role: string;
   passwordEnabled: boolean;
+}
+
+interface AuthUserResponse {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresInSeconds: number;
+  user: AuthUserResponse;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
-  private clerk: Clerk | null = null;
+  private readonly baseUrl = environment.apiBaseUrl.replace(/\/$/, '');
+  private readonly accessTokenKey = 'hermes.accessToken';
+  private readonly refreshTokenKey = 'hermes.refreshToken';
+  private account: AuthAccountSummary | null = null;
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
+
   private readonly stateSignal = signal<AuthState>({
     isLoaded: false,
     isAuthenticated: false,
@@ -34,317 +53,206 @@ export class AuthSessionService {
 
   readonly state = this.stateSignal.asReadonly();
 
+  constructor(private readonly http: HttpClient) {}
+
   isConfigured(): boolean {
-    return Boolean(environment.clerkPublishableKey);
+    return true;
   }
 
   hasSessionHint(): boolean {
     if (this.state().isAuthenticated) {
       return true;
     }
-
-    if (!this.isConfigured() || typeof window === 'undefined') {
+    if (typeof window === 'undefined') {
       return false;
     }
-
-    return this.hasClerkStorageHint(window.localStorage)
-      || this.hasClerkStorageHint(window.sessionStorage)
-      || document.cookie.split(';').some((cookie) => cookie.trim().startsWith('__session='));
+    return Boolean(window.localStorage.getItem(this.refreshTokenKey) || window.sessionStorage.getItem(this.refreshTokenKey));
   }
 
   async init(): Promise<void> {
-    const key = environment.clerkPublishableKey;
-    if (!key) {
+    this.loadStoredTokens();
+    if (!this.accessToken && !this.refreshToken) {
+      this.clearSession();
       this.stateSignal.set({ isLoaded: true, isAuthenticated: false, userId: null });
       return;
     }
 
-    if (!this.clerk) {
-      const { Clerk } = await import('@clerk/clerk-js');
-      this.clerk = new Clerk(key);
-      await this.clerk.load();
+    try {
+      await this.loadCurrentUser();
+    } catch {
+      const refreshed = await this.tryRefresh();
+      if (!refreshed) {
+        this.clearSession();
+      }
+    } finally {
+      this.syncState();
     }
-
-    this.syncState();
-  }
-
-  private syncState(): void {
-    const session = this.clerk?.session ?? null;
-    const user = this.clerk?.user ?? null;
-    this.stateSignal.set({
-      isLoaded: true,
-      isAuthenticated: Boolean(session),
-      userId: user?.id ?? null
-    });
   }
 
   async ensureAuthenticated(): Promise<boolean> {
     if (!this.state().isLoaded) {
       await this.init();
     }
-    this.syncState();
-    return this.state().isAuthenticated;
+    if (this.state().isAuthenticated) {
+      return true;
+    }
+    return this.tryRefresh();
   }
 
   async getToken(): Promise<string | null> {
     if (!this.state().isLoaded) {
       await this.init();
     }
-    if (!this.clerk?.session) {
-      return null;
+    if (this.accessToken) {
+      return this.accessToken;
     }
-    return this.clerk.session.getToken();
+    const refreshed = await this.tryRefresh();
+    return refreshed ? this.accessToken : null;
   }
 
   async signOut(): Promise<void> {
-    if (this.clerk?.session) {
-      await this.clerk.signOut();
+    const refreshToken = this.refreshToken;
+    try {
+      if (this.accessToken) {
+        await firstValueFrom(this.http.post<void>(`${this.baseUrl}/api/auth/logout`, { refreshToken }));
+      }
+    } catch {
+      // Logout local deve acontecer mesmo que a API esteja indisponivel.
+    } finally {
+      this.clearSession();
+      this.syncState();
     }
-    this.syncState();
   }
 
   getAccountSummary(): AuthAccountSummary | null {
-    const user = this.clerk?.user;
-    if (!user) {
-      return null;
-    }
-
-    return {
-      userId: user.id,
-      name: user.fullName || user.firstName || 'Conta HERMES',
-      email: user.primaryEmailAddress?.emailAddress ?? 'Email nao informado',
-      passwordEnabled: user.passwordEnabled
-    };
+    return this.account;
   }
 
   async refreshAccountSummary(): Promise<AuthAccountSummary | null> {
-    await this.init();
-    const user = this.clerk?.user;
-    if (user) {
-      await (user as any).reload?.();
+    if (!this.state().isLoaded) {
+      await this.init();
+    } else if (this.accessToken) {
+      await this.loadCurrentUser();
+      this.syncState();
     }
-    this.syncState();
-    return this.getAccountSummary();
+    return this.account;
   }
 
-  async openUserProfile(section: AuthProfileSection = 'profile'): Promise<AuthActionResult> {
-    await this.init();
-    if (!this.clerk) {
-      return { ok: false, message: 'Clerk nao esta configurado neste ambiente.' };
-    }
-    if (!this.clerk.session || !this.clerk.user) {
-      return { ok: false, message: 'Entre novamente para gerenciar sua conta.' };
-    }
-
-    const startPathBySection: Record<AuthProfileSection, string> = {
-      profile: '/account',
-      email: '/account/email-addresses',
-      password: '/security',
-      sessions: '/security/active-devices'
-    };
-    this.clerk.openUserProfile({
-      __experimental_startPath: startPathBySection[section]
-    } as any);
-    this.syncState();
-    return { ok: true };
-  }
-
-  async signInWithPassword(email: string, password: string): Promise<AuthActionResult> {
-    await this.init();
-    if (!this.clerk?.client) {
-      return { ok: false, message: 'Não foi possível autenticar agora.' };
-    }
-
+  async signInWithPassword(email: string, password: string, remember = true): Promise<AuthActionResult> {
     try {
-      const signIn = await this.clerk.client.signIn.create({
-        identifier: email,
-        password
-      } as any);
-
-      if (signIn.status === 'complete' && signIn.createdSessionId) {
-        await this.clerk.setActive({ session: signIn.createdSessionId });
-        this.syncState();
-        const synced = await this.ensureBackendAccess();
-        if (!synced) {
-          await this.signOut();
-          return { ok: false, message: 'Não foi possível concluir seu acesso agora. Tente novamente em instantes.' };
-        }
-        return { ok: true };
-      }
-
-      return { ok: false, message: 'Não foi possível concluir seu acesso agora.' };
+      const response = await firstValueFrom(this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/login`, {
+        email,
+        password,
+        remember
+      }));
+      this.applySession(response, remember);
+      return { ok: true };
     } catch (error: any) {
-      return { ok: false, message: this.extractClerkError(error, 'Não foi possível concluir seu acesso agora.') };
+      return { ok: false, message: this.extractApiError(error, 'Nao foi possivel concluir seu acesso agora.') };
     }
   }
 
   async signUpWithPassword(name: string, email: string, password: string): Promise<AuthActionResult> {
-    await this.init();
-    if (!this.clerk?.client) {
-      return { ok: false, message: 'Não foi possível iniciar o cadastro agora.' };
-    }
-
     try {
-      const [firstName, ...rest] = name.trim().split(' ');
-      const lastName = rest.join(' ') || undefined;
-
-      const signUp = await this.clerk.client.signUp.create({
-        firstName,
-        lastName,
-        emailAddress: email,
+      const response = await firstValueFrom(this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/register`, {
+        name,
+        email,
         password
-      } as any);
-
-      if (signUp.status === 'complete' && signUp.createdSessionId) {
-        await this.clerk.setActive({ session: signUp.createdSessionId });
-        this.syncState();
-        const synced = await this.ensureBackendAccess();
-        if (!synced) {
-          await this.signOut();
-          return { ok: false, message: 'Cadastro realizado, mas ainda não foi possível liberar seu acesso. Tente novamente em instantes.' };
-        }
-        return { ok: true };
-      }
-
-      await this.prepareSignUpEmailCode();
-      return { ok: false, requiresEmailVerification: true };
-    } catch (error: any) {
-      return { ok: false, message: this.extractClerkError(error, 'Não foi possível iniciar o cadastro agora.') };
-    }
-  }
-
-  async verifySignUpEmailCode(code: string): Promise<AuthActionResult> {
-    await this.init();
-    if (!this.clerk?.client?.signUp) {
-      return { ok: false, message: 'Sessão de cadastro expirada. Recomece o cadastro.' };
-    }
-
-    try {
-      const result = await this.clerk.client.signUp.attemptEmailAddressVerification({ code } as any);
-      if (result.status === 'complete' && result.createdSessionId) {
-        await this.clerk.setActive({ session: result.createdSessionId });
-        this.syncState();
-        const synced = await this.ensureBackendAccess();
-        if (!synced) {
-          await this.signOut();
-          return { ok: false, message: 'Código validado, mas seu acesso ainda não pôde ser liberado. Tente novamente em instantes.' };
-        }
-        return { ok: true };
-      }
-
-      return { ok: false, message: 'Código inválido ou expirado.' };
-    } catch (error: any) {
-      return { ok: false, message: this.extractClerkError(error, 'Código inválido ou expirado.') };
-    }
-  }
-
-  async resendSignUpEmailCode(): Promise<AuthActionResult> {
-    try {
-      await this.prepareSignUpEmailCode();
+      }));
+      this.applySession(response, true);
       return { ok: true };
+    } catch (error: any) {
+      return { ok: false, message: this.extractApiError(error, 'Nao foi possivel iniciar o cadastro agora.') };
+    }
+  }
+
+  private async tryRefresh(): Promise<boolean> {
+    if (!this.refreshToken) {
+      return false;
+    }
+    try {
+      const response = await firstValueFrom(this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/refresh`, {
+        refreshToken: this.refreshToken
+      }));
+      this.applySession(response, this.refreshStoredInLocalStorage());
+      return true;
     } catch {
-      return { ok: false, message: 'Não foi possível reenviar o código agora.' };
+      this.clearSession();
+      this.syncState();
+      return false;
     }
   }
 
-  private async prepareSignUpEmailCode(): Promise<void> {
-    await this.init();
-    if (!this.clerk?.client?.signUp) {
-      throw new Error('Signup state unavailable');
-    }
-    await this.clerk.client.signUp.prepareEmailAddressVerification({
-      strategy: 'email_code'
-    } as any);
+  private async loadCurrentUser(): Promise<void> {
+    const user = await firstValueFrom(this.http.get<AuthUserResponse>(`${this.baseUrl}/api/auth/me`));
+    this.account = this.toAccount(user);
   }
 
-  async startSocialSignIn(provider: 'google' | 'apple', mode: 'sign-in' | 'sign-up'): Promise<void> {
-    await this.init();
-    if (!this.clerk?.client) {
-      throw new Error('Serviço de autenticação indisponível.');
-    }
+  private applySession(response: AuthResponse, remember: boolean): void {
+    this.accessToken = response.accessToken;
+    this.refreshToken = response.refreshToken;
+    this.account = this.toAccount(response.user);
+    this.storeTokens(remember);
+    this.syncState();
+  }
 
-    const strategy = provider === 'google' ? 'oauth_google' : 'oauth_apple';
-    const redirectUrl = `${window.location.origin}/auth?mode=${mode}`;
-    const redirectUrlComplete = `${window.location.origin}/dashboard`;
+  private syncState(): void {
+    this.stateSignal.set({
+      isLoaded: true,
+      isAuthenticated: Boolean(this.accessToken && this.account),
+      userId: this.account?.userId ?? null
+    });
+  }
 
-    if (mode === 'sign-up') {
-      await this.clerk.client.signUp.authenticateWithRedirect({ strategy, redirectUrl, redirectUrlComplete } as any);
+  private toAccount(user: AuthUserResponse): AuthAccountSummary {
+    return {
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      passwordEnabled: true
+    };
+  }
+
+  private loadStoredTokens(): void {
+    if (typeof window === 'undefined') {
       return;
     }
-    await this.clerk.client.signIn.authenticateWithRedirect({ strategy, redirectUrl, redirectUrlComplete } as any);
+    this.accessToken = window.localStorage.getItem(this.accessTokenKey) ?? window.sessionStorage.getItem(this.accessTokenKey);
+    this.refreshToken = window.localStorage.getItem(this.refreshTokenKey) ?? window.sessionStorage.getItem(this.refreshTokenKey);
   }
 
-  async handleRedirectCallbackIfPresent(): Promise<boolean> {
-    const search = window.location.search;
-    const maybeOAuthReturn =
-      search.includes('__clerk') ||
-      search.includes('oauth') ||
-      search.includes('rotating_token_nonce');
-    if (!maybeOAuthReturn) {
-      return false;
+  private storeTokens(remember: boolean): void {
+    if (typeof window === 'undefined' || !this.accessToken || !this.refreshToken) {
+      return;
     }
-
-    await this.init();
-    if (!this.clerk) {
-      return false;
-    }
-
-    await this.clerk.handleRedirectCallback();
-    this.syncState();
-    const synced = await this.ensureBackendAccess();
-    if (!synced) {
-      await this.signOut();
-      return false;
-    }
-    return true;
+    const persistent = remember ? window.localStorage : window.sessionStorage;
+    const transient = remember ? window.sessionStorage : window.localStorage;
+    transient.removeItem(this.accessTokenKey);
+    transient.removeItem(this.refreshTokenKey);
+    persistent.setItem(this.accessTokenKey, this.accessToken);
+    persistent.setItem(this.refreshTokenKey, this.refreshToken);
   }
 
-  private async ensureBackendAccess(): Promise<boolean> {
-    const token = await this.getToken();
-    if (!token) {
-      return false;
-    }
-
-    const endpoint = `${environment.apiBaseUrl.replace(/\/$/, '')}/api/family-members?includeInactive=true`;
-    const maxAttempts = 6;
-    for (let i = 0; i < maxAttempts; i += 1) {
-      const res = await fetch(endpoint, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        return true;
-      }
-      if (res.status !== 404) {
-        return false;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    return false;
+  private refreshStoredInLocalStorage(): boolean {
+    return typeof window !== 'undefined' && window.localStorage.getItem(this.refreshTokenKey) === this.refreshToken;
   }
 
-  private extractClerkError(error: any, fallback: string): string {
-    const firstMessage = error?.errors?.[0]?.longMessage
-      || error?.errors?.[0]?.message
-      || error?.message;
-    if (!firstMessage || typeof firstMessage !== 'string') {
-      return fallback;
+  private clearSession(): void {
+    this.accessToken = null;
+    this.refreshToken = null;
+    this.account = null;
+    if (typeof window === 'undefined') {
+      return;
     }
-    return firstMessage;
+    window.localStorage.removeItem(this.accessTokenKey);
+    window.localStorage.removeItem(this.refreshTokenKey);
+    window.sessionStorage.removeItem(this.accessTokenKey);
+    window.sessionStorage.removeItem(this.refreshTokenKey);
   }
 
-  private hasClerkStorageHint(storage: Storage): boolean {
-    try {
-      for (let i = 0; i < storage.length; i += 1) {
-        const key = storage.key(i)?.toLowerCase() ?? '';
-        if (key.startsWith('clerk-db-jwt') || key.startsWith('clerk-db-session')) {
-          return true;
-        }
-      }
-    } catch {
-      return false;
-    }
-
-    return false;
+  private extractApiError(error: any, fallback: string): string {
+    const message = error?.error?.message || error?.error?.error || error?.message;
+    return typeof message === 'string' && message.trim() ? message : fallback;
   }
 }

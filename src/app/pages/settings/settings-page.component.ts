@@ -13,7 +13,7 @@ import { BudgetsFacade } from '../../core/facades/budgets.facade';
 import { BudgetStatusItem, BudgetUpsertRequest } from '../../core/models/budget.model';
 import { MonthService } from '../../core/services/month.service';
 import { budgetProgressWidth, budgetUsageTone } from '../../core/utils/budget-indicator.util';
-import { AuthAccountSummary, AuthProfileSection, AuthSessionService } from '../../core/auth/auth-session.service';
+import { AuthAccountSummary, AuthSessionService } from '../../core/auth/auth-session.service';
 import { ShareFacade } from '../../core/facades/share.facade';
 import { ShareToken } from '../../core/models/share.model';
 
@@ -440,21 +440,6 @@ export class SettingsPageComponent {
 
   budgetProgressWidth(row: BudgetStatusItem): string {
     return budgetProgressWidth(row.pctUsed);
-  }
-
-  async openAccountProfile(section: AuthProfileSection) {
-    this.accountLoading = true;
-    this.accountError = '';
-    this.accountMessage = '';
-
-    const result = await this.auth.openUserProfile(section);
-    this.accountLoading = false;
-    if (!result.ok) {
-      this.accountError = result.message ?? 'Nao foi possivel abrir o gerenciamento da conta.';
-      return;
-    }
-
-    this.accountMessage = 'Gerenciamento da conta aberto pelo Clerk.';
   }
 
   async refreshAccountSummary() {
