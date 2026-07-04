@@ -24,16 +24,14 @@ export class AuthPageComponent {
   readonly statusMessage = signal('');
   readonly isSubmitting = signal(false);
   readonly popupMessage = signal('');
-  readonly showVerificationPopup = signal(false);
-  readonly verificationCode = signal('');
-  private readonly genericAuthError = 'Não foi possível concluir a autenticação. Tente novamente.';
   readonly showSignInPassword = signal(false);
   readonly showSignUpPassword = signal(false);
   readonly showConfirmPassword = signal(false);
+  private readonly genericAuthError = 'Nao foi possivel concluir a autenticacao. Tente novamente.';
 
   readonly signInForm = this.fb.group({
     email: ['', [Validators.required, Validators.pattern(EMAIL_PATTERN)]],
-    password: ['', [Validators.required, Validators.pattern(PASSWORD_STRONG)]],
+    password: ['', [Validators.required]],
     remember: [true]
   });
 
@@ -83,7 +81,7 @@ export class AuthPageComponent {
 
   get signInPasswordValid(): boolean {
     const value = this.signInForm.controls.password.value ?? '';
-    return PASSWORD_STRONG.test(value);
+    return value.length > 0;
   }
 
   get canSubmitSignIn(): boolean {
@@ -104,8 +102,6 @@ export class AuthPageComponent {
       this.mode.set(params.get('mode') === 'sign-up' ? 'sign-up' : 'sign-in');
       this.statusMessage.set('');
     });
-
-    void this.tryHandleOAuthCallback();
   }
 
   async submitSignIn() {
@@ -118,13 +114,13 @@ export class AuthPageComponent {
     this.isSubmitting.set(true);
     try {
       const value = this.signInForm.getRawValue();
-      const result = await this.auth.signInWithPassword(value.email ?? '', value.password ?? '');
-      this.statusMessage.set(result.ok ? 'Login realizado com sucesso. Redirecionando...' : this.genericAuthError);
+      const result = await this.auth.signInWithPassword(value.email ?? '', value.password ?? '', Boolean(value.remember));
+      this.statusMessage.set(result.ok ? 'Login realizado com sucesso. Redirecionando...' : result.message ?? this.genericAuthError);
       if (result.ok) {
         await this.router.navigateByUrl('/dashboard');
         return;
       }
-      this.openPopup(this.genericAuthError);
+      this.openPopup(result.message ?? this.genericAuthError);
     } finally {
       this.isSubmitting.set(false);
     }
@@ -151,31 +147,12 @@ export class AuthPageComponent {
     this.isSubmitting.set(true);
     try {
       const result = await this.auth.signUpWithPassword(values.name ?? '', values.email ?? '', values.password ?? '');
-      if (result.requiresEmailVerification) {
-        this.showVerificationPopup.set(true);
-        this.statusMessage.set('Enviamos um código para seu email. Confirme para finalizar.');
-        return;
-      }
-
-      this.statusMessage.set(result.ok ? 'Cadastro concluido com sucesso. Redirecionando...' : this.genericAuthError);
+      this.statusMessage.set(result.ok ? 'Cadastro concluido com sucesso. Redirecionando...' : result.message ?? this.genericAuthError);
       if (result.ok) {
         await this.router.navigateByUrl('/dashboard');
         return;
       }
-      this.openPopup(this.genericAuthError);
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
-
-  async signInWithSso(provider: 'google' | 'apple') {
-    this.isSubmitting.set(true);
-    try {
-      await this.auth.startSocialSignIn(provider, this.mode());
-    } catch {
-      const message = `Nao foi possivel iniciar o SSO com ${provider === 'google' ? 'Google' : 'Apple'}.`;
-      this.statusMessage.set(message);
-      this.openPopup(message);
+      this.openPopup(result.message ?? this.genericAuthError);
     } finally {
       this.isSubmitting.set(false);
     }
@@ -183,47 +160,6 @@ export class AuthPageComponent {
 
   closePopup() {
     this.popupMessage.set('');
-  }
-
-  async confirmVerificationCode() {
-    const code = this.verificationCode().trim();
-    if (!code) {
-      this.openPopup('Informe o código enviado para o seu email.');
-      return;
-    }
-
-    this.isSubmitting.set(true);
-    try {
-      const result = await this.auth.verifySignUpEmailCode(code);
-      if (result.ok) {
-        this.showVerificationPopup.set(false);
-        this.statusMessage.set('Cadastro confirmado com sucesso. Redirecionando...');
-        await this.router.navigateByUrl('/dashboard');
-        return;
-      }
-      this.openPopup(this.genericAuthError);
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
-
-  async resendVerificationCode() {
-    this.isSubmitting.set(true);
-    try {
-      const result = await this.auth.resendSignUpEmailCode();
-      if (result.ok) {
-        this.statusMessage.set('Código reenviado para o email cadastrado.');
-        return;
-      }
-      this.openPopup(this.genericAuthError);
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
-
-  closeVerificationPopup() {
-    this.showVerificationPopup.set(false);
-    this.verificationCode.set('');
   }
 
   toggleSignInPasswordVisibility() {
@@ -240,18 +176,5 @@ export class AuthPageComponent {
 
   private openPopup(message: string) {
     this.popupMessage.set(message);
-  }
-
-  private async tryHandleOAuthCallback() {
-    try {
-      const handled = await this.auth.handleRedirectCallbackIfPresent();
-      if (handled) {
-        await this.router.navigateByUrl('/dashboard');
-      }
-    } catch {
-      const message = 'Falha ao concluir autenticacao social.';
-      this.statusMessage.set(message);
-      this.openPopup(message);
-    }
   }
 }

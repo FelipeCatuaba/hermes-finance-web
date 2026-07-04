@@ -4,7 +4,7 @@ import { AuthSessionService } from './auth-session.service';
 import { publicAuthResetGuard } from './public-auth-reset.guard';
 
 describe('publicAuthResetGuard', () => {
-  it('allows public landing when visitor is not authenticated', async () => {
+  it('checks internal auth state and allows public routes when visitor is not authenticated', async () => {
     const ensureAuthenticated = jasmine.createSpy().and.resolveTo(false);
 
     TestBed.configureTestingModule({
@@ -12,7 +12,6 @@ describe('publicAuthResetGuard', () => {
         {
           provide: AuthSessionService,
           useValue: {
-            hasSessionHint: jasmine.createSpy().and.returnValue(false),
             ensureAuthenticated
           }
         },
@@ -28,7 +27,7 @@ describe('publicAuthResetGuard', () => {
     const result = await TestBed.runInInjectionContext(() => publicAuthResetGuard({} as any, {} as any));
 
     expect(result).toBeTrue();
-    expect(ensureAuthenticated).not.toHaveBeenCalled();
+    expect(ensureAuthenticated).toHaveBeenCalled();
   });
 
   it('redirects authenticated users to the dashboard', async () => {
@@ -40,7 +39,6 @@ describe('publicAuthResetGuard', () => {
         {
           provide: AuthSessionService,
           useValue: {
-            hasSessionHint: jasmine.createSpy().and.returnValue(true),
             ensureAuthenticated: jasmine.createSpy().and.resolveTo(true)
           }
         },

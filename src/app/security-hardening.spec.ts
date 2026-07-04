@@ -22,6 +22,5 @@ describe('security hardening', () => {
     expect(serialized).not.toContain('sk_');
     expect(serialized).not.toContain('pk_test_');
     expect(serialized).not.toContain('prepared-blowfish');
-    expect(environment.clerkPublishableKey).toBe('');
   });
 });

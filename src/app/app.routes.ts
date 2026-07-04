@@ -11,6 +11,7 @@ export const routes: Routes = [
   },
   {
     path: 'auth',
+    canActivate: [publicAuthResetGuard],
     loadComponent: () => import('./pages/auth/auth-page.component').then((m) => m.AuthPageComponent)
   },
   {

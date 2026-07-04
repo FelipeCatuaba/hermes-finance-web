@@ -53,15 +53,14 @@ describe('SettingsPageComponent', () => {
       shareUrl: 'https://app.hermes.local/share/raw-token'
     }));
     shareFacade.revoke.and.returnValue(of(void 0));
-    auth = jasmine.createSpyObj<AuthSessionService>('AuthSessionService', ['isConfigured', 'refreshAccountSummary', 'openUserProfile']);
-    auth.isConfigured.and.returnValue(true);
+    auth = jasmine.createSpyObj<AuthSessionService>('AuthSessionService', ['refreshAccountSummary']);
     auth.refreshAccountSummary.and.resolveTo({
       userId: 'user-1',
       name: 'Felipe Catuaba',
       email: 'felipe@example.com',
+      role: 'OWNER',
       passwordEnabled: true
     });
-    auth.openUserProfile.and.resolveTo({ ok: true });
 
     await TestBed.configureTestingModule({
       imports: [SettingsPageComponent],
@@ -141,9 +140,10 @@ describe('SettingsPageComponent', () => {
     expect(budgetsFacade.status).toHaveBeenCalledTimes(2);
   });
 
-  it('loads Clerk account summary in settings', () => {
+  it('loads internal account summary in settings', () => {
     expect(auth.refreshAccountSummary).toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('felipe@example.com');
+    expect(fixture.nativeElement.textContent).toContain('OWNER');
   });
 
   it('creates share link for selected global month', () => {
@@ -158,15 +158,6 @@ describe('SettingsPageComponent', () => {
     expect(component.generatedShareUrl).toBe('https://app.hermes.local/share/raw-token');
   });
 
-  it('opens Clerk profile sections from account actions', async () => {
-    await component.openAccountProfile('email');
-    await component.openAccountProfile('password');
-    await component.openAccountProfile('sessions');
-
-    expect(auth.openUserProfile).toHaveBeenCalledWith('email');
-    expect(auth.openUserProfile).toHaveBeenCalledWith('password');
-    expect(auth.openUserProfile).toHaveBeenCalledWith('sessions');
-  });
 });
 
 function budgetStatus(): BudgetStatusResponse {
